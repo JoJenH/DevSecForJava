@@ -1,0 +1,122 @@
+.code-diff-wrapper {
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.code-diff-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-diff-badge {
+  display: inline-block;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--sans);
+  text-align: center;
+}
+
+.code-diff-badge--danger {
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--red);
+  border-right: 1px solid var(--border);
+}
+
+.code-diff-badge--success {
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--green);
+}
+
+.code-diff-container {
+  overflow-x: auto;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+/* Hide diff2html default file header */
+.d2h-file-header {
+  display: none;
+}
+
+/* ============================================
+   Diff2Html Dark Theme Overrides
+   ============================================ */
+
+/* Dark theme base */
+.code-diff-container .d2h-dark-color-scheme {
+  background-color: #0d1117 !important;
+  color: #e6edf3 !important;
+}
+
+/* Line numbers in dark theme */
+.code-diff-container .d2h-dark-color-scheme .d2h-code-linenumber,
+.code-diff-container .d2h-dark-color-scheme .d2h-code-side-linenumber {
+  background-color: #0d1117 !important;
+  color: #6e7681 !important;
+  border-color: #21262d !important;
+}
+
+/* Deleted lines */
+.code-diff-container .d2h-dark-color-scheme .d2h-del {
+  background-color: rgba(248, 81, 73, 0.15) !important;
+  border-color: rgba(248, 81, 73, 0.4) !important;
+}
+
+.code-diff-container .d2h-dark-color-scheme .d2h-code-line del,
+.code-diff-container .d2h-dark-color-scheme .d2h-code-side-line del {
+  background-color: rgba(248, 81, 73, 0.4) !important;
+  color: #ffdcd7 !important;
+}
+
+/* Inserted lines */
+.code-diff-container .d2h-dark-color-scheme .d2h-ins {
+  background-color: rgba(46, 160, 67, 0.15) !important;
+  border-color: rgba(46, 160, 67, 0.4) !important;
+}
+
+.code-diff-container .d2h-dark-color-scheme .d2h-code-line ins,
+.code-diff-container .d2h-dark-color-scheme .d2h-code-side-line ins {
+  background-color: rgba(46, 160, 67, 0.4) !important;
+  color: #aff5b4 !important;
+  text-decoration: none;
+}
+
+/* Info/context lines */
+.code-diff-container .d2h-dark-color-scheme .d2h-info {
+  background-color: rgba(56, 139, 253, 0.1) !important;
+  border-color: rgba(56, 139, 253, 0.4) !important;
+  color: #6e7681 !important;
+}
+
+/* File wrapper border */
+.code-diff-container .d2h-dark-color-scheme .d2h-file-wrapper {
+  border-color: #30363d !important;
+}
+
+/* Code line content background */
+.code-diff-container .d2h-dark-color-scheme .d2h-code-line {
+  background-color: transparent !important;
+  color: #e6edf3 !important;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .code-diff-header {
+    grid-template-columns: 1fr;
+  }
+
+  .code-diff-badge--danger {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}

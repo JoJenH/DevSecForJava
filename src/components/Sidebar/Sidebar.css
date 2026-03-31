@@ -1,0 +1,137 @@
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 4px 0;
+  font-family: var(--sans);
+}
+
+.sidebar-subtitle {
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0;
+  font-family: var(--sans);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 0;
+}
+
+.category {
+  margin-bottom: 4px;
+}
+
+.category-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: var(--sans);
+}
+
+.category-header:hover {
+  background: var(--bg3);
+  color: var(--accent);
+}
+
+.category-header.expanded {
+  color: var(--accent);
+}
+
+.category-header.active {
+  background: var(--bg3);
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+}
+
+.category-icon {
+  font-size: 10px;
+  color: var(--text2);
+  transition: transform 0.2s ease;
+  width: 16px;
+  text-align: center;
+}
+
+.category-name {
+  flex: 1;
+}
+
+.category-items {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  background: var(--bg);
+}
+
+.item-button {
+  width: 100%;
+  padding: 8px 16px 8px 40px;
+  background: transparent;
+  border: none;
+  color: var(--text2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-family: var(--sans);
+  border-left: 2px solid transparent;
+}
+
+.item-button:hover {
+  color: var(--text);
+  background: var(--bg2);
+}
+
+.item-button.active {
+  color: var(--accent);
+  background: var(--bg3);
+  border-left-color: var(--accent);
+}
+
+/* Scrollbar styling */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: var(--bg2);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--text3);
+}

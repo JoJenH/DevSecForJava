@@ -1,0 +1,220 @@
+.category-content {
+  flex: 1;
+  margin-left: 260px;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg);
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+/* Sticky Header */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  backdrop-filter: blur(10px);
+  min-height: 120px;
+}
+
+.sticky-header-category {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  font-family: var(--sans);
+}
+
+.sticky-header-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 10px 0;
+  font-family: var(--sans);
+  line-height: 1.3;
+}
+
+.sticky-header-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text2);
+  margin: 0;
+  font-family: var(--sans);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Content Body - Add padding to account for sticky header */
+.content-body {
+  padding: 20px 32px 60px;
+}
+
+/* Vulnerability Item */
+.vulnerability-item {
+  padding-top: 20px;
+  scroll-margin-top: 140px; /* Ensure item doesn't get hidden under sticky header */
+}
+
+/* When item is active (currently viewing), hide its inline header to avoid duplication */
+.vulnerability-item.is-active .item-header-inline {
+  display: none;
+}
+
+.item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.item-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.item-meta {
+  flex: 1;
+}
+
+.item-category {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+  font-family: var(--sans);
+}
+
+.item-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  font-family: var(--sans);
+}
+
+.item-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text2);
+  margin: 0 0 20px 0;
+  padding-left: 52px;
+  font-family: var(--sans);
+}
+
+.item-content {
+  padding-left: 52px;
+}
+
+/* Code Section */
+.code-section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 10px 0;
+  font-family: var(--sans);
+}
+
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.section-icon.danger {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--red);
+}
+
+.section-icon.success {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--green);
+}
+
+.item-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+  margin: 40px 0;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text2);
+  font-size: 16px;
+  font-family: var(--sans);
+}
+
+/* Scrollbar styling */
+.category-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.category-content::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.category-content::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 4px;
+}
+
+.category-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .category-content {
+    margin-left: 0;
+  }
+  
+  .sticky-header,
+  .content-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .item-description,
+  .item-content {
+    padding-left: 0;
+  }
+  
+  .item-header {
+    padding-left: 0;
+  }
+}
