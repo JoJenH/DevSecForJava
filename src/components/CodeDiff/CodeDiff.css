@@ -107,6 +107,152 @@
 }
 
 /* ============================================
+   Highlight.js Theme - GitHub Light (default)
+   ============================================ */
+.code-diff-container .hljs {
+  color: #24292e;
+  background: transparent;
+}
+.code-diff-container .hljs-doctag,
+.code-diff-container .hljs-keyword,
+.code-diff-container .hljs-meta .hljs-keyword,
+.code-diff-container .hljs-template-tag,
+.code-diff-container .hljs-template-variable,
+.code-diff-container .hljs-type,
+.code-diff-container .hljs-variable.language_ {
+  color: #d73a49;
+}
+.code-diff-container .hljs-title,
+.code-diff-container .hljs-title.class_,
+.code-diff-container .hljs-title.class_.inherited__,
+.code-diff-container .hljs-title.function_ {
+  color: #6f42c1;
+}
+.code-diff-container .hljs-attr,
+.code-diff-container .hljs-attribute,
+.code-diff-container .hljs-literal,
+.code-diff-container .hljs-meta,
+.code-diff-container .hljs-number,
+.code-diff-container .hljs-operator,
+.code-diff-container .hljs-variable,
+.code-diff-container .hljs-selector-attr,
+.code-diff-container .hljs-selector-class,
+.code-diff-container .hljs-selector-id {
+  color: #005cc5;
+}
+.code-diff-container .hljs-regexp,
+.code-diff-container .hljs-string,
+.code-diff-container .hljs-meta .hljs-string {
+  color: #032f62;
+}
+.code-diff-container .hljs-built_in,
+.code-diff-container .hljs-symbol {
+  color: #e36209;
+}
+.code-diff-container .hljs-comment,
+.code-diff-container .hljs-code,
+.code-diff-container .hljs-formula {
+  color: #6a737d;
+}
+.code-diff-container .hljs-name,
+.code-diff-container .hljs-quote,
+.code-diff-container .hljs-selector-tag,
+.code-diff-container .hljs-selector-pseudo {
+  color: #22863a;
+}
+.code-diff-container .hljs-subst {
+  color: #24292e;
+}
+.code-diff-container .hljs-section {
+  color: #005cc5;
+  font-weight: bold;
+}
+.code-diff-container .hljs-bullet {
+  color: #735c0f;
+}
+.code-diff-container .hljs-emphasis {
+  color: #24292e;
+  font-style: italic;
+}
+.code-diff-container .hljs-strong {
+  color: #24292e;
+  font-weight: bold;
+}
+
+/* ============================================
+   Highlight.js Theme - GitHub Dark
+   ============================================ */
+[data-theme="dark"] .code-diff-container .hljs {
+  color: #c9d1d9;
+  background: transparent;
+}
+[data-theme="dark"] .code-diff-container .hljs-doctag,
+[data-theme="dark"] .code-diff-container .hljs-keyword,
+[data-theme="dark"] .code-diff-container .hljs-meta .hljs-keyword,
+[data-theme="dark"] .code-diff-container .hljs-template-tag,
+[data-theme="dark"] .code-diff-container .hljs-template-variable,
+[data-theme="dark"] .code-diff-container .hljs-type,
+[data-theme="dark"] .code-diff-container .hljs-variable.language_ {
+  color: #ff7b72;
+}
+[data-theme="dark"] .code-diff-container .hljs-title,
+[data-theme="dark"] .code-diff-container .hljs-title.class_,
+[data-theme="dark"] .code-diff-container .hljs-title.class_.inherited__,
+[data-theme="dark"] .code-diff-container .hljs-title.function_ {
+  color: #d2a8ff;
+}
+[data-theme="dark"] .code-diff-container .hljs-attr,
+[data-theme="dark"] .code-diff-container .hljs-attribute,
+[data-theme="dark"] .code-diff-container .hljs-literal,
+[data-theme="dark"] .code-diff-container .hljs-meta,
+[data-theme="dark"] .code-diff-container .hljs-number,
+[data-theme="dark"] .code-diff-container .hljs-operator,
+[data-theme="dark"] .code-diff-container .hljs-variable,
+[data-theme="dark"] .code-diff-container .hljs-selector-attr,
+[data-theme="dark"] .code-diff-container .hljs-selector-class,
+[data-theme="dark"] .code-diff-container .hljs-selector-id {
+  color: #79c0ff;
+}
+[data-theme="dark"] .code-diff-container .hljs-regexp,
+[data-theme="dark"] .code-diff-container .hljs-string,
+[data-theme="dark"] .code-diff-container .hljs-meta .hljs-string {
+  color: #a5d6ff;
+}
+[data-theme="dark"] .code-diff-container .hljs-built_in,
+[data-theme="dark"] .code-diff-container .hljs-symbol {
+  color: #ffa657;
+}
+[data-theme="dark"] .code-diff-container .hljs-comment,
+[data-theme="dark"] .code-diff-container .hljs-code,
+[data-theme="dark"] .code-diff-container .hljs-formula {
+  color: #8b949e;
+}
+[data-theme="dark"] .code-diff-container .hljs-name,
+[data-theme="dark"] .code-diff-container .hljs-quote,
+[data-theme="dark"] .code-diff-container .hljs-selector-tag,
+[data-theme="dark"] .code-diff-container .hljs-selector-pseudo {
+  color: #7ee787;
+}
+[data-theme="dark"] .code-diff-container .hljs-subst {
+  color: #c9d1d9;
+}
+[data-theme="dark"] .code-diff-container .hljs-section {
+  color: #1f6feb;
+  font-weight: bold;
+}
+[data-theme="dark"] .code-diff-container .hljs-bullet {
+  color: #f2cc60;
+}
+[data-theme="dark"] .code-diff-container .hljs-emphasis {
+  color: #c9d1d9;
+  font-style: italic;
+}
+[data-theme="dark"] .code-diff-container .hljs-strong {
+  color: #c9d1d9;
+  font-weight: bold;
+}
+
+/* ============================================
    Responsive Design
    ============================================ */
 
