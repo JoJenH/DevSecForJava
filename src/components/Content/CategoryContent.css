@@ -47,6 +47,7 @@
   font-family: var(--sans);
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -60,11 +61,6 @@
 .vulnerability-item {
   padding-top: 20px;
   scroll-margin-top: 140px; /* Ensure item doesn't get hidden under sticky header */
-}
-
-/* When item is active (currently viewing), hide its inline header to avoid duplication */
-.vulnerability-item.is-active .item-header-inline {
-  display: none;
 }
 
 .item-header {
@@ -125,58 +121,10 @@
   padding-left: 52px;
 }
 
-/* Code Section */
-.code-section {
-  margin-bottom: 20px;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  margin: 0 0 10px 0;
-  font-family: var(--sans);
-}
-
-.section-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: bold;
-}
-
-.section-icon.danger {
-  background: rgba(248, 113, 113, 0.15);
-  color: var(--red);
-}
-
-.section-icon.success {
-  background: rgba(74, 222, 128, 0.15);
-  color: var(--green);
-}
-
 .item-divider {
   height: 1px;
   background: linear-gradient(to right, transparent, var(--border), transparent);
   margin: 40px 0;
-}
-
-/* Empty State */
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text2);
-  font-size: 16px;
-  font-family: var(--sans);
 }
 
 /* Scrollbar styling */

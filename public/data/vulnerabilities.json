@@ -7,7 +7,7 @@
         {
           "id": "sql-jdbc",
           "name": "SQL 注入 - JDBC",
-          "title": "JDBC",
+          "shortName": "JDBC",
           "description": "当使用 JDBC 进行 SQL 查询时，如果直接将用户输入拼接到 SQL 语句中，攻击者可以通过构造恶意输入来修改 SQL 语句的结构，从而执行非授权的数据库操作，造成数据泄露、篡改或删除等严重后果。",
           "vulnerableCode": "String sql = \"SELECT * FROM users WHERE username = '\" + username + \"' AND password = '\" + password + \"'\";\nStatement stmt = connection.createStatement();\nResultSet rs = stmt.executeQuery(sql);",
           "fixedCode": "String sql = \"SELECT * FROM users WHERE username = ? AND password = ?\";\nPreparedStatement pstmt = connection.prepareStatement(sql);\npstmt.setString(1, username);\npstmt.setString(2, password);\nResultSet rs = pstmt.executeQuery();",
@@ -26,7 +26,7 @@
         {
           "id": "sql-mybatis-xml",
           "name": "SQL 注入 - MyBatis XML",
-          "title": "MyBatis XML",
+          "shortName": "MyBatis XML",
           "description": "在 MyBatis 的 XML 映射文件中，使用 ${} 占位符会直接拼接字符串，如果其中包含用户输入，将导致 SQL 注入漏洞。",
           "vulnerableCode": "<select id=\"getUser\" resultType=\"User\">\n  SELECT * FROM users WHERE username = ${username}\n</select>",
           "fixedCode": "<select id=\"getUser\" resultType=\"User\">\n  SELECT * FROM users WHERE username = #{username}\n</select>",
@@ -45,7 +45,7 @@
         {
           "id": "sql-mybatis-annotation",
           "name": "SQL 注入 - MyBatis 注解",
-          "title": "MyBatis 注解",
+          "shortName": "MyBatis 注解",
           "description": "在 MyBatis 的注解方式中，同样需要注意 ${} 和 #{} 的区别。使用 @Select 等注解时，字符串拼接方式会导致 SQL 注入。",
           "vulnerableCode": "@Select(\"SELECT * FROM users WHERE id = ${userId}\")\nUser getUserById(@Param(\"userId\") String userId);",
           "fixedCode": "@Select(\"SELECT * FROM users WHERE id = #{userId}\")\nUser getUserById(@Param(\"userId\") String userId);",
@@ -64,7 +64,7 @@
         {
           "id": "sql-mybatis-plus",
           "name": "SQL 注入 - MyBatis Plus",
-          "title": "MyBatis Plus",
+          "shortName": "MyBatis Plus",
           "description": "MyBatis Plus 提供了便捷的 CRUD 操作，但在使用自定义 SQL 或条件构造器时，仍需要注意 SQL 注入风险。",
           "vulnerableCode": "// 不安全的自定义 SQL\n@Select(\"SELECT * FROM \" + tableName + \" WHERE id = #{id}\")\nUser getUser(@Param(\"tableName\") String tableName, @Param(\"id\") Long id);\n\n// 不安全的条件构造\nqueryWrapper.apply(\"id = \" + userId);",
           "fixedCode": "// 使用安全的表名校验\n@Select(\"SELECT * FROM ${tableName} WHERE id = #{id}\")\nUser getUser(@Param(\"tableName\") String tableName, @Param(\"id\") Long id);\n// 在 service 层校验 tableName 是否在白名单中\n\n// 使用参数化条件\nqueryWrapper.eq(\"id\", userId);",
@@ -83,7 +83,7 @@
         {
           "id": "sql-jpa",
           "name": "SQL 注入 - JPA",
-          "title": "JPA",
+          "shortName": "JPA",
           "description": "JPA 和 Spring Data JPA 通常能有效防止 SQL 注入，但在使用原生查询或动态 JPQL 时仍需谨慎。",
           "vulnerableCode": "// 不安全的原生查询\n@Query(value = \"SELECT * FROM users WHERE name = '\" + name + \"'\", nativeQuery = true)\nList<User> findByName(String name);\n\n// 不安全的 JPQL 拼接\nString jpql = \"SELECT u FROM User u WHERE u.name = '\" + userName + \"'\";",
           "fixedCode": "// 使用参数绑定\n@Query(value = \"SELECT * FROM users WHERE name = :name\", nativeQuery = true)\nList<User> findByName(@Param(\"name\") String name);\n\n// 或使用 ?1 占位符\n@Query(value = \"SELECT * FROM users WHERE name = ?1\", nativeQuery = true)\nList<User> findByName(String name);\n\n// 使用 Criteria API 构建动态查询\nCriteriaBuilder cb = entityManager.getCriteriaBuilder();\nCriteriaQuery<User> query = cb.createQuery(User.class);\nRoot<User> root = query.from(User.class);\nquery.where(cb.equal(root.get(\"name\"), userName));",
@@ -108,7 +108,7 @@
         {
           "id": "rce-runtime",
           "name": "RCE - Runtime",
-          "title": "Runtime",
+          "shortName": "Runtime",
           "description": "使用 Runtime.exec() 或 ProcessBuilder 执行系统命令时，如果命令参数包含用户输入，攻击者可能注入恶意命令，导致远程代码执行。",
           "vulnerableCode": "String cmd = \"ping \" + request.getParameter(\"host\");\nProcess process = Runtime.getRuntime().exec(cmd);",
           "fixedCode": "// 使用数组形式传递命令和参数\nString host = request.getParameter(\"host\");\n// 对输入进行严格校验\nif (!isValidHost(host)) {\n    throw new IllegalArgumentException(\"Invalid host\");\n}\nProcess process = Runtime.getRuntime().exec(new String[]{\"ping\", host});",
@@ -127,7 +127,7 @@
         {
           "id": "rce-scriptengine",
           "name": "RCE - ScriptEngine",
-          "title": "ScriptEngine",
+          "shortName": "ScriptEngine",
           "description": "Java 的 ScriptEngine 允许执行动态脚本（如 JavaScript、Groovy 等），如果执行的内容包含用户输入，将导致严重的 RCE 漏洞。",
           "vulnerableCode": "ScriptEngineManager manager = new ScriptEngineManager();\nScriptEngine engine = manager.getEngineByName(\"JavaScript\");\nString script = request.getParameter(\"code\");\nengine.eval(script);",
           "fixedCode": "// 避免直接使用用户输入执行脚本\n// 如果必须使用，实施严格的沙箱限制\nScriptEngineManager manager = new ScriptEngineManager();\nScriptEngine engine = manager.getEngineByName(\"JavaScript\");\n\n// 使用沙箱环境，限制访问\nBindings bindings = new SimpleBindings();\n// 仅暴露安全的对象\nbindings.put(\"safeVar\", safeValue);\n\nString userCode = request.getParameter(\"code\");\n// 对代码进行语法检查和危险操作检测\nif (containsDangerousOps(userCode)) {\n    throw new SecurityException(\"Dangerous operation detected\");\n}\nengine.eval(userCode, bindings);",
@@ -152,7 +152,7 @@
         {
           "id": "spel-basic",
           "name": "SpEL 注入",
-          "title": "SpEL 注入",
+          "shortName": "SpEL 注入",
           "description": "Spring Expression Language (SpEL) 是一种强大的表达式语言，如果表达式内容包含用户输入，攻击者可以执行任意代码。",
           "vulnerableCode": "ExpressionParser parser = new SpelExpressionParser();\nString userInput = request.getParameter(\"expr\");\nExpression exp = parser.parseExpression(userInput);\nObject result = exp.getValue();",
           "fixedCode": "ExpressionParser parser = new SpelExpressionParser();\nString userInput = request.getParameter(\"expr\");\n\n// 使用 SimpleEvaluationContext 限制功能\nSimpleEvaluationContext context = SimpleEvaluationContext\n    .forReadOnlyDataBinding()\n    .build();\n\n// 或者使用安全的解析方式\nExpression exp = parser.parseExpression(userInput);\nObject result = exp.getValue(context);",
@@ -177,7 +177,7 @@
         {
           "id": "ssrf-urlconnection",
           "name": "SSRF - URLConnection",
-          "title": "URLConnection",
+          "shortName": "URLConnection",
           "description": "服务端请求伪造（SSRF）允许攻击者让服务器发起任意请求。当应用程序使用用户输入的 URL 进行网络请求时，可能导致内网扫描、敏感信息泄露等。",
           "vulnerableCode": "String url = request.getParameter(\"url\");\nURLConnection conn = new URL(url).openConnection();\nInputStream is = conn.getInputStream();",
           "fixedCode": "String url = request.getParameter(\"url\");\nURL parsedUrl = new URL(url);\n\n// 校验协议\nif (!parsedUrl.getProtocol().equals(\"http\") \n    && !parsedUrl.getProtocol().equals(\"https\")) {\n    throw new IllegalArgumentException(\"Invalid protocol\");\n}\n\n// 校验主机（禁止内网 IP）\nString host = parsedUrl.getHost();\nif (isInternalIp(host)) {\n    throw new IllegalArgumentException(\"Internal IP not allowed\");\n}\n\n// 使用白名单限制域名\nif (!isInWhitelist(host)) {\n    throw new IllegalArgumentException(\"Host not in whitelist\");\n}\n\nURLConnection conn = parsedUrl.openConnection();",
@@ -202,7 +202,7 @@
         {
           "id": "xxe-documentbuilder",
           "name": "XXE - DocumentBuilder",
-          "title": "DocumentBuilder",
+          "shortName": "DocumentBuilder",
           "description": "XML 外部实体注入（XXE）允许攻击者利用 XML 解析器的外部实体功能，读取本地文件、执行 SSRF 攻击等。",
           "vulnerableCode": "DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\nDocumentBuilder builder = factory.newDocumentBuilder();\nDocument doc = builder.parse(request.getInputStream());",
           "fixedCode": "DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();\n// 禁用外部实体\nfactory.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);\nfactory.setFeature(\"http://xml.org/sax/features/external-general-entities\", false);\nfactory.setFeature(\"http://xml.org/sax/features/external-parameter-entities\", false);\nfactory.setFeature(\"http://apache.org/xml/features/nonvalidating/load-external-dtd\", false);\nfactory.setXIncludeAware(false);\nfactory.setExpandEntityReferences(false);\n\nDocumentBuilder builder = factory.newDocumentBuilder();\nDocument doc = builder.parse(request.getInputStream());",
@@ -227,7 +227,7 @@
         {
           "id": "deserialization-java",
           "name": "Java 原生反序列化",
-          "title": "Java 原生反序列化",
+          "shortName": "Java 原生反序列化",
           "description": "Java 原生反序列化漏洞允许攻击者通过构造恶意序列化数据，在反序列化时执行任意代码。这是 Java 应用中最危险的漏洞之一。",
           "vulnerableCode": "ObjectInputStream ois = new ObjectInputStream(request.getInputStream());\nObject obj = ois.readObject();",
           "fixedCode": "// 方案1: 使用白名单机制\nObjectInputStream ois = new ObjectInputStream(request.getInputStream()) {\n    @Override\n    protected Class<?> resolveClass(ObjectStreamClass desc) {\n        String className = desc.getName();\n        // 只允许特定类\n        if (!isInWhitelist(className)) {\n            throw new InvalidClassException(\"Class not allowed\", className);\n        }\n        return super.resolveClass(desc);\n    }\n};\nObject obj = ois.readObject();\n\n// 方案2: 使用安全的序列化格式（如 JSON）\nObjectMapper mapper = new ObjectMapper();\nUser user = mapper.readValue(request.getInputStream(), User.class);",

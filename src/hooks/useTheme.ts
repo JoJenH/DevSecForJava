@@ -62,22 +62,10 @@ export function useTheme() {
     window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: newTheme }));
   }, [theme]);
 
-  const setDarkTheme = useCallback(() => {
-    setThemeState('dark');
-    window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: 'dark' }));
-  }, []);
-
-  const setLightTheme = useCallback(() => {
-    setThemeState('light');
-    window.dispatchEvent(new CustomEvent(THEME_CHANGE_EVENT, { detail: 'light' }));
-  }, []);
-
   return {
     theme,
     isDark: theme === 'dark',
     isLight: theme === 'light',
     toggleTheme,
-    setDarkTheme,
-    setLightTheme,
   };
 }
