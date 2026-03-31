@@ -1,9 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { useState, useCallback, useMemo } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { CategoryContent } from './components/Content/CategoryContent';
+import { EditorPage } from './components/EditorPage/EditorPage';
+import { LoginPage } from './components/LoginPage/LoginPage';
 import { useVulnerabilities } from './hooks/useVulnerabilities';
 import { useTheme } from './hooks/useTheme';
+import { auth } from './services/api';
 import type { VulnerabilityCategory } from './types';
 import './App.css';
 
@@ -32,6 +35,32 @@ function CategoryPage({
   );
 }
 
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const [checking, setChecking] = useState(true);
+  const [isAuth, setIsAuth] = useState(false);
+
+  useEffect(() => {
+    auth.check().then(valid => {
+      setIsAuth(valid);
+      setChecking(false);
+    });
+  }, []);
+
+  if (checking) {
+    return (
+      <div className="loading">
+        <div className="loading-spinner">验证中...</div>
+      </div>
+    );
+  }
+
+  if (!isAuth) {
+    return <LoginPage onLogin={() => setIsAuth(true)} />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppContent() {
   const { data, loading, error } = useVulnerabilities();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -41,6 +70,8 @@ function AppContent() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(initialExpandedCategories);
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdmin = location.pathname === '/admin';
 
   const handleSelectItem = useCallback((itemId: string, categoryId: string) => {
     setSelectedItemId(itemId);
@@ -63,7 +94,14 @@ function AppContent() {
     });
   }, []);
 
-  // Render loading state
+  if (isAdmin) {
+    return (
+      <AdminGuard>
+        <EditorPage onBack={() => navigate('/')} />
+      </AdminGuard>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading">
@@ -72,7 +110,6 @@ function AppContent() {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <div className="error">
@@ -82,7 +119,6 @@ function AppContent() {
     );
   }
 
-  // Render empty state
   if (!data || data.categories.length === 0) {
     return (
       <div className="error">

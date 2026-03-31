@@ -7,7 +7,7 @@ export function useVulnerabilities() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/data/vulnerabilities.json')
+    fetch('/api/data')
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to load vulnerability data');
