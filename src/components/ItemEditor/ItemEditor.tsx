@@ -228,11 +228,22 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
             <span className="editor-section-icon">⚡</span>
             <h3 className="editor-section-title">POC (概念验证)</h3>
           </div>
-          <textarea
-            className="editor-textarea editor-textarea--code"
+          <Editor
+            height="300px"
+            language="markdown"
+            theme={isDark ? 'vs-dark' : 'light'}
             value={form.poc}
-            onChange={e => updateField('poc', e.target.value)}
-            rows={6}
+            onChange={v => updateField('poc', v || '')}
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              lineNumbers: 'on',
+              fontSize: 13,
+              fontFamily: 'var(--mono)',
+              padding: { top: 8 },
+              automaticLayout: true,
+              wordWrap: 'on',
+            }}
           />
         </div>
       </div>

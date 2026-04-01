@@ -382,8 +382,11 @@ func main() {
 
 	adminPassword := os.Getenv("ADMIN_PASSWORD")
 	if adminPassword == "" {
-		adminPassword = "admin123"
-		fmt.Println("⚠️  Using default admin password. Set ADMIN_PASSWORD env variable for production.")
+		b := make([]byte, 16)
+		rand.Read(b)
+		adminPassword = hex.EncodeToString(b)
+		fmt.Printf("🔑 Generated admin password: %s\n", adminPassword)
+		fmt.Println("   Set ADMIN_PASSWORD env variable to use a custom password.")
 	}
 
 	dataPath := os.Getenv("DATA_PATH")

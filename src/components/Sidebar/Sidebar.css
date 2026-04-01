@@ -1,5 +1,5 @@
 .sidebar {
-  width: 260px;
+  width: 280px;
   height: 100vh;
   background: var(--bg2);
   border-right: 1px solid var(--border);
@@ -10,24 +10,38 @@
   top: 0;
   overflow-y: auto;
   z-index: 100;
+  box-shadow: var(--shadow-lg);
 }
 
 .sidebar-header {
-  padding: 20px;
+  padding: 24px 20px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg3);
+  background: linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-gradient);
 }
 
 .sidebar-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text);
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   font-family: var(--sans);
+  letter-spacing: -0.3px;
 }
 
 .sidebar-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text2);
   margin: 0;
   font-family: var(--sans);
@@ -35,51 +49,59 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: 12px 0;
+  padding: 16px 12px;
 }
 
 .category {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .category-header {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 12px 14px;
   background: transparent;
   border: none;
   color: var(--text);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   font-family: var(--sans);
+  border-radius: 10px;
 }
 
 .category-header:hover {
   background: var(--bg3);
-  color: var(--accent);
+  color: var(--accent2);
+  transform: translateX(2px);
 }
 
 .category-header.expanded {
-  color: var(--accent);
+  color: var(--accent2);
 }
 
 .category-header.active {
-  background: var(--bg3);
-  color: var(--accent);
-  border-left: 2px solid var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent2);
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
 }
 
 .category-icon {
   font-size: 10px;
-  color: var(--text2);
-  transition: transform 0.2s ease;
-  width: 16px;
+  color: var(--text3);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 18px;
   text-align: center;
+}
+
+.category-header.expanded .category-icon {
+  transform: rotate(90deg);
+  color: var(--accent2);
 }
 
 .category-name {
@@ -88,34 +110,59 @@
 
 .category-items {
   list-style: none;
-  margin: 0;
-  padding: 4px 0;
-  background: var(--bg);
+  margin: 4px 0 8px;
+  padding: 0;
+  background: transparent;
 }
 
 .item-button {
   width: 100%;
-  padding: 8px 16px 8px 40px;
+  padding: 10px 14px 10px 42px;
   background: transparent;
   border: none;
   color: var(--text2);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   font-family: var(--sans);
-  border-left: 2px solid transparent;
+  border-radius: 8px;
+  margin: 2px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.item-button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+  transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .item-button:hover {
   color: var(--text);
-  background: var(--bg2);
+  background: var(--bg3);
+  transform: translateX(2px);
+}
+
+.item-button:hover::before {
+  height: 20px;
 }
 
 .item-button.active {
-  color: var(--accent);
-  background: var(--bg3);
-  border-left-color: var(--accent);
+  color: var(--accent2);
+  background: rgba(99, 102, 241, 0.08);
+  font-weight: 500;
+}
+
+.item-button.active::before {
+  height: 24px;
 }
 
 /* Scrollbar styling */
@@ -124,14 +171,14 @@
 }
 
 .sidebar::-webkit-scrollbar-track {
-  background: var(--bg2);
+  background: transparent;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: var(--border2);
+  background: var(--border);
   border-radius: 3px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-  background: var(--text3);
+  background: var(--border2);
 }

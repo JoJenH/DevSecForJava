@@ -21,7 +21,7 @@
             "使用参数化查询（? 占位符）代替字符串拼接",
             "对用户输入进行严格的输入验证和过滤"
           ],
-          "poc": "用户名输入: admin' OR '1'='1\n密码输入: anything\n\n结果 SQL 变为:\nSELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything'\n\n这将绕过身份验证，返回所有存在的用户。"
+          "poc": "用户名输入: admin' OR '1'='1\n密码输入: anything\n\n结果 SQL 变为:\n```sql\nSELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything'\n```\n这将绕过身份验证，返回所有存在的用户。"
         },
         {
           "id": "sql-mybatis-xml",
@@ -40,7 +40,7 @@
             "对于必须使用的 ${}（如动态表名/列名），进行严格的白名单校验",
             "在应用层对用户输入进行过滤和验证"
           ],
-          "poc": "传入参数: username = \"'admin' OR '1'='1\"\n\n生成的 SQL:\nSELECT * FROM users WHERE username = 'admin' OR '1'='1'\n\n这将返回所有用户记录。"
+          "poc": "传入参数: username = \"'admin' OR '1'='1\"\n\n生成的 SQL:\n```sql\nSELECT * FROM users WHERE username = 'admin' OR '1'='1'\n```\n这将返回所有用户记录。"
         },
         {
           "id": "sql-mybatis-annotation",
