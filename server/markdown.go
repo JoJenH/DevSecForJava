@@ -1,102 +1,149 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
+
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/text"
 )
 
-func LoadFromMarkdown(path string) (VulnerabilityData, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return VulnerabilityData{Categories: []VulnerabilityCategory{}}, nil
-		}
-		return VulnerabilityData{}, fmt.Errorf("failed to read file: %w", err)
-	}
-
-	vulnData := parseMarkdown(string(data))
-	return vulnData, nil
+func ImportFromMarkdown(content string) (VulnerabilityData, error) {
+	data := parseMarkdownWithGoldmark(content)
+	return data, nil
 }
 
-func parseMarkdown(content string) VulnerabilityData {
+func ExportToMarkdown(data VulnerabilityData) string {
+	return serializeToMarkdown(data)
+}
+
+func parseMarkdownWithGoldmark(content string) VulnerabilityData {
 	data := VulnerabilityData{Categories: []VulnerabilityCategory{}}
-	scanner := bufio.NewScanner(strings.NewReader(content))
+
+	source := []byte(content)
+	reader := text.NewReader(source)
+	md := goldmark.DefaultParser()
+	root := md.Parse(reader)
 
 	var currentCategory *VulnerabilityCategory
 	var currentItem *VulnerabilityItem
 	var currentField string
-	var fieldLines []string
+	var inFieldContent bool
+	var fieldContent strings.Builder
 
-	for scanner.Scan() {
-		line := scanner.Text()
+	ast.Walk(root, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
 
-		if strings.HasPrefix(line, "# ") {
+		switch node := n.(type) {
+		case *ast.Heading:
+			text := getTextContent(node, source)
+			switch node.Level {
+			case 1: // Category
+				if currentItem != nil && currentCategory != nil {
+					currentCategory.Items = append(currentCategory.Items, *currentItem)
+				}
+				if currentCategory != nil {
+					data.Categories = append(data.Categories, *currentCategory)
+				}
+				currentCategory = &VulnerabilityCategory{
+					ID:    generateID(text),
+					Name:  text,
+					Items: []VulnerabilityItem{},
+				}
+				currentItem = nil
+				currentField = ""
+				inFieldContent = false
+				fieldContent.Reset()
+			case 2: // Item
+				if currentItem != nil && currentCategory != nil {
+					currentCategory.Items = append(currentCategory.Items, *currentItem)
+				}
+				if currentCategory != nil {
+					currentItem = &VulnerabilityItem{
+						ID:   generateID(text),
+						Name: text,
+					}
+				}
+				currentField = ""
+				inFieldContent = false
+				fieldContent.Reset()
+			case 3: // Field name
+				// Save previous field content if any
+				if currentItem != nil && currentField != "" && fieldContent.Len() > 0 {
+					saveFieldToItem(currentItem, currentField, fieldContent.String())
+				}
+				currentField = text
+				inFieldContent = true
+				fieldContent.Reset()
+			}
+
+		case *ast.FencedCodeBlock:
+			if currentItem != nil && inFieldContent {
+				code := getCodeBlockContent(node, source)
+				if fieldContent.Len() > 0 {
+					fieldContent.WriteString("\n")
+				}
+				fieldContent.WriteString(code)
+			}
+
+		case *ast.Paragraph:
+			if currentItem != nil && inFieldContent {
+				text := getTextContent(node, source)
+				if fieldContent.Len() > 0 {
+					fieldContent.WriteString("\n")
+				}
+				fieldContent.WriteString(text)
+			}
+
+		case *ast.List:
+			if currentItem != nil && inFieldContent {
+				// For lists, we need to handle them specially for audit/fix points
+				items := getListItems(node, source)
+				if currentField == "审计要点" || currentField == "修复要点" {
+					// Save directly as array
+					saveListFieldToItem(currentItem, currentField, items)
+					currentField = "" // Reset to avoid double saving
+					fieldContent.Reset()
+					inFieldContent = false
+				} else {
+					// For other fields, just append as text
+					for _, item := range items {
+						if fieldContent.Len() > 0 {
+							fieldContent.WriteString("\n")
+						}
+						fieldContent.WriteString("- " + item)
+					}
+				}
+			}
+
+		case *ast.ThematicBreak:
+			// Item separator
 			if currentItem != nil && currentCategory != nil {
-				saveItemField(currentItem, currentField, fieldLines)
+				if currentField != "" && fieldContent.Len() > 0 {
+					saveFieldToItem(currentItem, currentField, fieldContent.String())
+				}
 				currentCategory.Items = append(currentCategory.Items, *currentItem)
 				currentItem = nil
+				currentField = ""
+				inFieldContent = false
+				fieldContent.Reset()
 			}
-			if currentCategory != nil {
-				data.Categories = append(data.Categories, *currentCategory)
-			}
-
-			currentCategory = &VulnerabilityCategory{
-				ID:    generateID(strings.TrimPrefix(line, "# ")),
-				Name:  strings.TrimPrefix(line, "# "),
-				Items: []VulnerabilityItem{},
-			}
-			currentField = ""
-			fieldLines = nil
-			continue
 		}
 
-		if strings.HasPrefix(line, "## ") {
-			if currentItem != nil && currentCategory != nil {
-				saveItemField(currentItem, currentField, fieldLines)
-				currentCategory.Items = append(currentCategory.Items, *currentItem)
-			}
-			if currentCategory == nil {
-				return data
-			}
-			currentItem = &VulnerabilityItem{
-				ID:   generateID(strings.TrimPrefix(line, "## ")),
-				Name: strings.TrimPrefix(line, "## "),
-			}
-			currentField = ""
-			fieldLines = nil
-			continue
-		}
+		return ast.WalkContinue, nil
+	})
 
-		if strings.HasPrefix(line, "### ") {
-			if currentItem != nil && currentField != "" {
-				saveItemField(currentItem, currentField, fieldLines)
-			}
-			currentField = strings.TrimPrefix(line, "### ")
-			fieldLines = nil
-			continue
-		}
-
-		if strings.TrimSpace(line) == "---" {
-			if currentItem != nil && currentField != "" {
-				saveItemField(currentItem, currentField, fieldLines)
-			}
-			currentField = ""
-			fieldLines = nil
-			continue
-		}
-
-		if currentItem != nil && currentField != "" {
-			fieldLines = append(fieldLines, line)
-		}
-	}
-
+	// Save last item and category
 	if currentItem != nil && currentCategory != nil {
-		saveItemField(currentItem, currentField, fieldLines)
+		if currentField != "" && fieldContent.Len() > 0 {
+			saveFieldToItem(currentItem, currentField, fieldContent.String())
+		}
 		currentCategory.Items = append(currentCategory.Items, *currentItem)
 	}
 	if currentCategory != nil {
@@ -106,12 +153,50 @@ func parseMarkdown(content string) VulnerabilityData {
 	return data
 }
 
-func saveItemField(item *VulnerabilityItem, field string, lines []string) {
-	if item == nil || field == "" {
-		return
-	}
-	content := strings.TrimSpace(strings.Join(lines, "\n"))
+func getTextContent(node ast.Node, source []byte) string {
+	var buf bytes.Buffer
+	getTextContentRecursive(node, source, &buf)
+	return strings.TrimSpace(buf.String())
+}
 
+func getTextContentRecursive(node ast.Node, source []byte, buf *bytes.Buffer) {
+	for child := node.FirstChild(); child != nil; child = child.NextSibling() {
+		switch n := child.(type) {
+		case *ast.Text:
+			buf.Write(n.Value(source))
+		case *ast.String:
+			buf.Write(n.Value)
+		default:
+			// Recursively get text from child nodes (for TextBlock, etc.)
+			getTextContentRecursive(child, source, buf)
+		}
+	}
+}
+
+func getCodeBlockContent(node *ast.FencedCodeBlock, source []byte) string {
+	var buf bytes.Buffer
+	for i := 0; i < node.Lines().Len(); i++ {
+		line := node.Lines().At(i)
+		buf.Write(line.Value(source))
+	}
+	return strings.TrimSuffix(buf.String(), "\n")
+}
+
+func getListItems(node *ast.List, source []byte) []string {
+	var items []string
+	for child := node.FirstChild(); child != nil; child = child.NextSibling() {
+		if listItem, ok := child.(*ast.ListItem); ok {
+			itemText := getTextContent(listItem, source)
+			if itemText != "" {
+				items = append(items, itemText)
+			}
+		}
+	}
+	return items
+}
+
+func saveFieldToItem(item *VulnerabilityItem, field, content string) {
+	content = strings.TrimSpace(content)
 	switch field {
 	case "描述":
 		item.Description = content
@@ -120,24 +205,31 @@ func saveItemField(item *VulnerabilityItem, field string, lines []string) {
 	case "修复代码":
 		item.FixedCode = content
 	case "审计要点":
-		item.AuditPoints = parseListContent(lines)
+		item.AuditPoints = parseListContent(content)
 	case "修复要点":
-		item.FixPoints = parseListContent(lines)
+		item.FixPoints = parseListContent(content)
 	case "POC":
 		item.POC = content
 	}
 }
 
-func parseListContent(lines []string) []string {
+func saveListFieldToItem(item *VulnerabilityItem, field string, items []string) {
+	switch field {
+	case "审计要点":
+		item.AuditPoints = items
+	case "修复要点":
+		item.FixPoints = items
+	}
+}
+
+func parseListContent(content string) []string {
 	var items []string
+	lines := strings.Split(content, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		line = strings.TrimPrefix(line, "- ")
 		line = strings.TrimPrefix(line, "* ")
 		line = strings.TrimPrefix(line, "+ ")
-		for i := 1; i <= 20; i++ {
-			line = strings.TrimPrefix(line, fmt.Sprintf("%d. ", i))
-		}
 		if line != "" {
 			items = append(items, line)
 		}
@@ -150,19 +242,31 @@ func generateID(name string) string {
 	return hex.EncodeToString(h[:8])
 }
 
-func SaveToMarkdown(path string, data VulnerabilityData) error {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return err
+// getCodeFence returns the appropriate fence marker for code content
+// It counts the maximum consecutive backticks in the content and returns
+// a fence with more backticks than that
+func getCodeFence(content string) string {
+	maxBackticks := 0
+	currentBackticks := 0
+
+	for _, ch := range content {
+		if ch == '`' {
+			currentBackticks++
+			if currentBackticks > maxBackticks {
+				maxBackticks = currentBackticks
+			}
+		} else {
+			currentBackticks = 0
+		}
 	}
 
-	dir := filepath.Dir(absPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
+	// Need at least 3 backticks, or more than the content has
+	fenceLen := maxBackticks + 1
+	if fenceLen < 3 {
+		fenceLen = 3
 	}
 
-	md := serializeToMarkdown(data)
-	return os.WriteFile(absPath, []byte(md), 0644)
+	return strings.Repeat("`", fenceLen)
 }
 
 func serializeToMarkdown(data VulnerabilityData) string {
@@ -179,15 +283,17 @@ func serializeToMarkdown(data VulnerabilityData) string {
 			}
 
 			if item.VulnerableCode != "" {
-				sb.WriteString("### 漏洞代码\n\n```\n")
+				fence := getCodeFence(item.VulnerableCode)
+				sb.WriteString(fmt.Sprintf("### 漏洞代码\n\n%sjava\n", fence))
 				sb.WriteString(item.VulnerableCode)
-				sb.WriteString("\n```\n\n")
+				sb.WriteString(fmt.Sprintf("\n%s\n\n", fence))
 			}
 
 			if item.FixedCode != "" {
-				sb.WriteString("### 修复代码\n\n```\n")
+				fence := getCodeFence(item.FixedCode)
+				sb.WriteString(fmt.Sprintf("### 修复代码\n\n%sjava\n", fence))
 				sb.WriteString(item.FixedCode)
-				sb.WriteString("\n```\n\n")
+				sb.WriteString(fmt.Sprintf("\n%s\n\n", fence))
 			}
 
 			if len(item.AuditPoints) > 0 {

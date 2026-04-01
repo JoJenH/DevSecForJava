@@ -4,47 +4,35 @@
 
 ### 描述
 
-当使用 JDBC 进行 SQL 查询时，如果直接将用户输入拼接到 SQL 语句中，攻击者可以通过构造恶意输入来修改 SQL 语句的结构，从而执行非授权的数据库操作，造成数据泄露、篡改或删除等严重后果。1
+测试
 
 ### 漏洞代码
 
 ```java
-String sql = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
-Statement stmt = connection.createStatement();
-ResultSet rs = stmt.executeQuery(sql);
+test
 ```
 
 ### 修复代码
 
 ```java
-String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-PreparedStatement pstmt = connection.prepareStatement(sql);
-pstmt.setString(1, username);
-pstmt.setString(2, password);
-ResultSet rs = pstmt.executeQuery();
+fixed
 ```
 
 ### 审计要点
 
-- 检查是否存在字符串拼接构建 SQL 语句的情况
-- 查找 Statement 的直接使用，特别是 executeQuery、executeUpdate 方法
-- 关注用户输入参数是否直接拼接到 SQL 中
+- 检查点
 
 ### 修复要点
 
-- 使用 PreparedStatement 替代 Statement
-- 使用参数化查询（? 占位符）代替字符串拼接
-- 对用户输入进行严格的输入验证和过滤
+- 修复点
 
 ### POC
 
-用户名输入: admin' OR '1'='1
-密码输入: anything
+```
+admin OR 1=1
+```
 
-结果 SQL 变为:
-SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything'
-
-这将绕过身份验证，返回所有存在的用户。
+这是POC说明
 
 ---
 
@@ -56,7 +44,7 @@ SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything
 
 ### 漏洞代码
 
-```xml
+```java
 <select id="getUser" resultType="User">
     SELECT * FROM users WHERE username = ${username}
 </select>
@@ -64,7 +52,7 @@ SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything
 
 ### 修复代码
 
-```xml
+```java
 <select id="getUser" resultType="User">
     SELECT * FROM users WHERE username = #{username}
 </select>
@@ -74,7 +62,7 @@ SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything
 
 - 检查 MyBatis XML 文件中是否使用 ${} 占位符
 - 关注 ${} 中的参数是否来自用户输入
-- 审查动态 SQL 标签（如 <if>、<choose>）中的变量使用
+- 审查动态 SQL 标签（如 、）中的变量使用
 
 ### 修复要点
 
@@ -85,10 +73,7 @@ SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything
 ### POC
 
 传入参数: username = "'admin' OR '1'='1"
-
-生成的 SQL:
-SELECT * FROM users WHERE username = 'admin' OR '1'='1'
-
+生成的 SQL:SELECT * FROM users WHERE username = 'admin' OR '1'='1'
 这将返回所有用户记录。
 
 ---
@@ -128,10 +113,7 @@ User getUserById(@Param("userId") String userId);
 ### POC
 
 传入参数: userId = "1 OR 1=1"
-
-生成的 SQL:
-SELECT * FROM users WHERE id = 1 OR 1=1
-
+生成的 SQL:SELECT * FROM users WHERE id = 1 OR 1=1
 这将返回表中所有用户数据。
 
 ---
@@ -180,10 +162,7 @@ queryWrapper.eq("id", userId);
 ### POC
 
 传入参数: tableName = "users; DROP TABLE orders; --"
-
-生成的 SQL:
-SELECT * FROM users; DROP TABLE orders; -- WHERE id = 1
-
+生成的 SQL:SELECT * FROM users; DROP TABLE orders; -- WHERE id = 1
 这将导致 orders 表被删除。
 
 ---
@@ -238,10 +217,7 @@ query.where(cb.equal(root.get("name"), userName));
 ### POC
 
 传入参数: name = "admin' UNION SELECT * FROM credit_cards--"
-
-生成的 SQL:
-SELECT * FROM users WHERE name = 'admin' UNION SELECT * FROM credit_cards--'
-
+生成的 SQL:SELECT * FROM users WHERE name = 'admin' UNION SELECT * FROM credit_cards--'
 这将导致 credit_cards 表数据泄露。
 
 ---
@@ -287,10 +263,7 @@ Process process = Runtime.getRuntime().exec(new String[]{"ping", host});
 ### POC
 
 传入参数: host = "127.0.0.1; cat /etc/passwd"
-
-执行的命令:
-ping 127.0.0.1; cat /etc/passwd
-
+执行的命令:ping 127.0.0.1; cat /etc/passwd
 这将执行额外的 cat 命令，泄露系统敏感信息。
 
 ---
@@ -342,7 +315,6 @@ engine.eval(userCode, bindings);
 ### POC
 
 传入代码: code = "java.lang.Runtime.getRuntime().exec('calc')"
-
 这将执行系统命令，打开计算器程序。在 Linux 系统上可执行任意命令。
 
 ---
@@ -394,7 +366,6 @@ Object result = exp.getValue(context);
 ### POC
 
 传入表达式: expr = "T(java.lang.Runtime).getRuntime().exec('id')"
-
 这将执行系统 id 命令，返回当前用户信息。攻击者可利用此执行任意系统命令。
 
 ---
@@ -456,11 +427,8 @@ URLConnection conn = parsedUrl.openConnection();
 ### POC
 
 传入 URL: url = "http://169.254.169.254/latest/meta-data/"
-
 这将访问云服务商的元数据服务，可能获取到敏感凭证信息。
-
-或: url = "file:///etc/passwd"
-这将读取服务器本地文件。
+或: url = "file:///etc/passwd"这将读取服务器本地文件。
 
 ---
 
@@ -510,14 +478,11 @@ Document doc = builder.parse(request.getInputStream());
 
 ### POC
 
-```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE foo [
     <!ENTITY xxe SYSTEM "file:///etc/passwd">
 ]>
 <foo>&xxe;</foo>
-```
-
 这将导致服务器返回 /etc/passwd 文件内容。
 
 ---
@@ -574,11 +539,8 @@ User user = mapper.readValue(request.getInputStream(), User.class);
 ### POC
 
 攻击者构造包含恶意 Commons Collections 链的序列化数据，在 readObject() 执行时触发 RCE。
-
 常用工具: ysoserial
-
-```
 java -jar ysoserial.jar CommonsCollections1 'calc.exe' > payload.bin
-```
 
 ---
+

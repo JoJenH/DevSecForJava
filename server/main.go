@@ -54,7 +54,7 @@ func main() {
 
 	dataPath := os.Getenv("DATA_PATH")
 	if dataPath == "" {
-		dataPath = filepath.Join(execDir, "data", "vulnerabilities.md")
+		dataPath = filepath.Join(execDir, "data", "vulnerabilities.yaml")
 	}
 
 	distPath := os.Getenv("DIST_PATH")
@@ -90,6 +90,8 @@ func main() {
 	admin.POST("/categories/:categoryId/items", HandleCreateItem(store))
 	admin.PUT("/categories/:categoryId/items/:itemId", HandleUpdateItem(store))
 	admin.DELETE("/categories/:categoryId/items/:itemId", HandleDeleteItem(store))
+	admin.GET("/export/markdown", HandleExportMarkdown(store))
+	admin.POST("/import/markdown", HandleImportMarkdown(store))
 
 	distDir := http.Dir(distPath)
 

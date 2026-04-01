@@ -29,7 +29,7 @@ func (s *Store) load() error {
 		return err
 	}
 
-	parsed, err := LoadFromMarkdown(absPath)
+	parsed, err := LoadFromYAML(absPath)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (s *Store) saveLocked() error {
 		return err
 	}
 
-	return SaveToMarkdown(absPath, s.data)
+	return SaveToYAML(absPath, s.data)
 }
 
 func (s *Store) GetAll() VulnerabilityData {
@@ -191,4 +191,12 @@ func (s *Store) DeleteItem(categoryID, itemID string) error {
 		}
 	}
 	return fmt.Errorf("category not found")
+}
+
+func (s *Store) ReplaceData(data VulnerabilityData) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data = data
+	return s.saveLocked()
 }

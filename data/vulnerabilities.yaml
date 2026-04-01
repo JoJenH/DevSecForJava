@@ -1,0 +1,20 @@
+categories:
+    - id: 2ca3b93fbfec6b09
+      name: RCE
+      items:
+        - id: 43438311a9f330a6
+          name: Runtime.exec
+          description: 使用 Runtime.exec() 执行系统命令时存在命令注入风险
+          vulnerablecode: |-
+            String cmd = "ping " + host;
+            Runtime.getRuntime().exec(cmd);
+          fixedcode: |-
+            String[] cmd = {"ping", host};
+            Runtime.getRuntime().exec(cmd);
+          auditpoints:
+            - 检查命令拼接
+            - 查找 Runtime.exec 调用
+          fixpoints:
+            - 使用命令数组
+            - 验证输入参数
+          poc: 传入 host = "127.0.0.1; cat /etc/passwd"

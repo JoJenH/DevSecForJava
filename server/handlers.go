@@ -126,3 +126,49 @@ func HandleDeleteItem(store *Store) echo.HandlerFunc {
 		return c.NoContent(http.StatusNoContent)
 	}
 }
+
+func HandleExportMarkdown(store *Store) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		data := store.GetAll()
+		markdown := ExportToMarkdown(data)
+		c.Response().Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		c.Response().Header().Set("Content-Disposition", "attachment; filename=vulnerabilities.md")
+		return c.String(http.StatusOK, markdown)
+	}
+}
+
+func HandleImportMarkdown(store *Store) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Read the uploaded file
+		file, err := c.FormFile("file")
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "file is required"})
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to open file"})
+		}
+		defer src.Close()
+
+		// Read file content
+		buf := make([]byte, file.Size)
+		_, err = src.Read(buf)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
+		}
+
+		// Parse markdown
+		data, err := ImportFromMarkdown(string(buf))
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("failed to parse markdown: %v", err)})
+		}
+
+		// Replace store data
+		if err := store.ReplaceData(data); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, map[string]string{"message": "import successful"})
+	}
+}
