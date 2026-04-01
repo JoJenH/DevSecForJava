@@ -7,7 +7,7 @@ import './ItemEditor.css';
 interface ItemEditorProps {
   item: VulnerabilityItem;
   categoryId: string;
-  onSave: (categoryId: string, itemId: string, item: Omit<VulnerabilityItem, 'id'>) => void;
+  onSave: (categoryId: string, itemId: string, item: VulnerabilityItem) => void;
   saving: boolean;
 }
 
@@ -109,7 +109,6 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
   const { isDark } = useTheme();
   const [form, setForm] = useState({
     name: item.name,
-    shortName: item.shortName,
     description: item.description,
     vulnerableCode: item.vulnerableCode,
     fixedCode: item.fixedCode,
@@ -119,10 +118,9 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
   });
   const [hasChanges, setHasChanges] = useState(false);
   
-  // 当保存成功或item变化时重置hasChanges
   useEffect(() => {
     setHasChanges(false);
-  }, [item]);
+  }, [item.id]);
 
   const updateField = useCallback(<K extends keyof typeof form>(key: K, value: typeof form[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -130,13 +128,12 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
   }, []);
 
   const handleSave = () => {
-    onSave(categoryId, item.id, form);
+    onSave(categoryId, item.id!, form);
   };
 
   const handleReset = () => {
     setForm({
       name: item.name,
-      shortName: item.shortName,
       description: item.description,
       vulnerableCode: item.vulnerableCode,
       fixedCode: item.fixedCode,
@@ -150,7 +147,7 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
   return (
     <div className="item-editor">
       <div className="item-editor-header">
-        <h2 className="item-editor-title">编辑: {item.shortName}</h2>
+        <h2 className="item-editor-title">编辑: {item.name}</h2>
         <div className="item-editor-actions">
           <button
             className="editor-btn editor-btn--secondary"
@@ -171,25 +168,14 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
 
       <div className="item-editor-body">
         <div className="editor-section">
-          <div className="editor-row">
-            <div className="editor-field">
-              <label className="editor-label">名称</label>
-              <input
-                type="text"
-                className="editor-input"
-                value={form.name}
-                onChange={e => updateField('name', e.target.value)}
-              />
-            </div>
-            <div className="editor-field editor-field--short">
-              <label className="editor-label">简称</label>
-              <input
-                type="text"
-                className="editor-input"
-                value={form.shortName}
-                onChange={e => updateField('shortName', e.target.value)}
-              />
-            </div>
+          <div className="editor-field">
+            <label className="editor-label">名称</label>
+            <input
+              type="text"
+              className="editor-input"
+              value={form.name}
+              onChange={e => updateField('name', e.target.value)}
+            />
           </div>
 
           <div className="editor-field">

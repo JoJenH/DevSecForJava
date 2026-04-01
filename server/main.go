@@ -54,7 +54,7 @@ func main() {
 
 	dataPath := os.Getenv("DATA_PATH")
 	if dataPath == "" {
-		dataPath = filepath.Join(execDir, "data", "vulnerabilities.json")
+		dataPath = filepath.Join(execDir, "data", "vulnerabilities.md")
 	}
 
 	distPath := os.Getenv("DIST_PATH")

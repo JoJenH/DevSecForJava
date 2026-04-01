@@ -1,7 +1,6 @@
 export interface VulnerabilityItem {
-  id: string;
+  id?: string;
   name: string;
-  shortName: string;
   description: string;
   vulnerableCode: string;
   fixedCode: string;

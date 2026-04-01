@@ -23,7 +23,6 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
     ? category.items.find(i => i.id === selectedItemId) || category.items[0]
     : category.items[0];
 
-  // Handle scroll to detect which item is currently in view
   useEffect(() => {
     const contentEl = contentRef.current;
     if (!contentEl) return;
@@ -56,16 +55,13 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
     return () => contentEl.removeEventListener('scroll', handleScroll);
   }, [onScrollItem]);
 
-  // Reset tracking when category changes
   useEffect(() => {
     lastScrolledItemId.current = null;
   }, [category.id]);
 
-  // Handle scroll to selected item
   useEffect(() => {
     if (!selectedItemId) return;
 
-    // Only scroll if this is a new selection from sidebar click
     if (selectedItemId === lastScrolledItemId.current) return;
 
     const element = itemRefs.current.get(selectedItemId);
@@ -111,7 +107,7 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
         {category.items.map((item, index) => (
           <article
             key={item.id}
-            ref={setItemRef(item.id)}
+            ref={setItemRef(item.id!)}
             className={`vulnerability-item ${selectedItemId === item.id ? 'is-active' : ''}`}
             data-item-id={item.id}
           >
@@ -126,7 +122,6 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
             <p className="item-description">{item.description}</p>
 
             <div className="item-content">
-              {/* Code Diff - Side by side layout */}
               <CodeDiff
                 vulnerableCode={item.vulnerableCode}
                 fixedCode={item.fixedCode}

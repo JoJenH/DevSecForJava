@@ -22,13 +22,9 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [inlineEdit, setInlineEdit] = useState<InlineEditState>(null);
-  const [newCategoryId, setNewCategoryId] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newItemId, setNewItemId] = useState('');
   const [newItemName, setNewItemName] = useState('');
-  const [newItemShortName, setNewItemShortName] = useState('');
   const initialLoadDone = useRef(false);
-  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -56,9 +52,9 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
   const selectedItem = selectedCategory?.items.find(i => i.id === selectedItemId);
 
-  const handleCreateCategory = async (id: string, name: string) => {
+  const handleCreateCategory = async (name: string) => {
     try {
-      const newCat = await api.createCategory(id, name);
+      const newCat = await api.createCategory(name);
       setCategories(prev => [...prev, newCat]);
       setSelectedCategoryId(newCat.id);
       setSelectedItemId(null);
@@ -98,13 +94,13 @@ export function EditorPage({ onBack }: EditorPageProps) {
           c.id === categoryId ? { ...c, items: [...c.items, newItem] } : c
         )
       );
-      setSelectedItemId(newItem.id);
+      setSelectedItemId(newItem.id!);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create item');
     }
   };
 
-  const handleUpdateItem = async (categoryId: string, itemId: string, item: Omit<VulnerabilityItem, 'id'>) => {
+  const handleUpdateItem = async (categoryId: string, itemId: string, item: VulnerabilityItem) => {
     try {
       setSaving(true);
       const updated = await api.updateItem(categoryId, itemId, item);
@@ -125,20 +121,17 @@ export function EditorPage({ onBack }: EditorPageProps) {
   };
 
   const handleCreateCategoryInline = () => {
-    if (newCategoryId.trim() && newCategoryName.trim()) {
-      handleCreateCategory(newCategoryId.trim(), newCategoryName.trim());
-      setNewCategoryId('');
+    if (newCategoryName.trim()) {
+      handleCreateCategory(newCategoryName.trim());
       setNewCategoryName('');
       setInlineEdit(null);
     }
   };
 
   const handleCreateItemInline = (categoryId: string) => {
-    if (newItemId.trim() && newItemName.trim() && newItemShortName.trim()) {
+    if (newItemName.trim()) {
       handleCreateItem(categoryId, {
-        id: newItemId.trim(),
         name: newItemName.trim(),
-        shortName: newItemShortName.trim(),
         description: '',
         vulnerableCode: '',
         fixedCode: '',
@@ -146,20 +139,15 @@ export function EditorPage({ onBack }: EditorPageProps) {
         fixPoints: [],
         poc: '',
       });
-      setNewItemId('');
       setNewItemName('');
-      setNewItemShortName('');
       setInlineEdit(null);
     }
   };
 
   const cancelInlineEdit = () => {
     setInlineEdit(null);
-    setNewCategoryId('');
     setNewCategoryName('');
-    setNewItemId('');
     setNewItemName('');
-    setNewItemShortName('');
   };
 
   const handleDeleteItem = async (categoryId: string, itemId: string) => {
@@ -268,13 +256,16 @@ export function EditorPage({ onBack }: EditorPageProps) {
                       <li key={item.id}>
                         <button
                           className={`editor-item-btn ${selectedItemId === item.id ? 'active' : ''}`}
-                          onClick={() => setSelectedItemId(item.id)}
+                          onClick={() => {
+                            setSelectedCategoryId(category.id);
+                            setSelectedItemId(item.id!);
+                          }}
                         >
-                          {item.shortName}
+                          {item.name}
                         </button>
                         <button
                           className="editor-icon-btn editor-icon-btn--danger editor-icon-btn--small"
-                          onClick={() => handleDeleteItem(category.id, item.id)}
+                          onClick={() => handleDeleteItem(category.id, item.id!)}
                         >
                           ✕
                         </button>
@@ -285,35 +276,14 @@ export function EditorPage({ onBack }: EditorPageProps) {
                         <div className="inline-edit-row">
                           <input
                             type="text"
-                            placeholder="条目 ID (英文)"
-                            value={newItemId}
-                            onChange={e => setNewItemId(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') e.preventDefault();
-                              if (e.key === 'Escape') cancelInlineEdit();
-                            }}
-                            autoFocus
-                          />
-                          <input
-                            type="text"
                             placeholder="条目名称"
                             value={newItemName}
                             onChange={e => setNewItemName(e.target.value)}
                             onKeyDown={e => {
-                              if (e.key === 'Enter') e.preventDefault();
-                              if (e.key === 'Escape') cancelInlineEdit();
-                            }}
-                          />
-                          <input
-                            ref={newItemInputRef}
-                            type="text"
-                            placeholder="简称"
-                            value={newItemShortName}
-                            onChange={e => setNewItemShortName(e.target.value)}
-                            onKeyDown={e => {
                               if (e.key === 'Enter') handleCreateItemInline(category.id);
                               if (e.key === 'Escape') cancelInlineEdit();
                             }}
+                            autoFocus
                           />
                         </div>
                         <div className="inline-edit-actions">
@@ -351,17 +321,6 @@ export function EditorPage({ onBack }: EditorPageProps) {
                 <div className="inline-edit-row">
                   <input
                     type="text"
-                    placeholder="分类 ID (英文)"
-                    value={newCategoryId}
-                    onChange={e => setNewCategoryId(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') e.preventDefault();
-                      if (e.key === 'Escape') cancelInlineEdit();
-                    }}
-                    autoFocus
-                  />
-                  <input
-                    type="text"
                     placeholder="分类名称"
                     value={newCategoryName}
                     onChange={e => setNewCategoryName(e.target.value)}
@@ -369,6 +328,7 @@ export function EditorPage({ onBack }: EditorPageProps) {
                       if (e.key === 'Enter') handleCreateCategoryInline();
                       if (e.key === 'Escape') cancelInlineEdit();
                     }}
+                    autoFocus
                   />
                 </div>
                 <div className="inline-edit-actions">

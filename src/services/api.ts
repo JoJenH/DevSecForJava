@@ -87,22 +87,22 @@ export const api = {
     return request<VulnerabilityData>('/data');
   },
 
-  createCategory(id: string, name: string): Promise<VulnerabilityCategory> {
+  createCategory(name: string): Promise<VulnerabilityCategory> {
     return request<VulnerabilityCategory>('/categories', {
       method: 'POST',
-      body: JSON.stringify({ id, name }),
+      body: JSON.stringify({ name }),
     });
   },
 
   updateCategory(categoryId: string, name: string): Promise<VulnerabilityCategory> {
-    return request<VulnerabilityCategory>(`/categories/${categoryId}`, {
+    return request<VulnerabilityCategory>(`/categories/${encodeURIComponent(categoryId)}`, {
       method: 'PUT',
       body: JSON.stringify({ name }),
     });
   },
 
   deleteCategory(categoryId: string): Promise<void> {
-    return request<void>(`/categories/${categoryId}`, {
+    return request<void>(`/categories/${encodeURIComponent(categoryId)}`, {
       method: 'DELETE',
     });
   },
@@ -111,7 +111,7 @@ export const api = {
     categoryId: string,
     item: VulnerabilityItem
   ): Promise<VulnerabilityItem> {
-    return request<VulnerabilityItem>(`/categories/${categoryId}/items`, {
+    return request<VulnerabilityItem>(`/categories/${encodeURIComponent(categoryId)}/items`, {
       method: 'POST',
       body: JSON.stringify(item),
     });
@@ -120,16 +120,16 @@ export const api = {
   updateItem(
     categoryId: string,
     itemId: string,
-    item: Omit<VulnerabilityItem, 'id'>
+    item: VulnerabilityItem
   ): Promise<VulnerabilityItem> {
-    return request<VulnerabilityItem>(`/categories/${categoryId}/items/${itemId}`, {
+    return request<VulnerabilityItem>(`/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
       method: 'PUT',
       body: JSON.stringify(item),
     });
   },
 
   deleteItem(categoryId: string, itemId: string): Promise<void> {
-    return request<void>(`/categories/${categoryId}/items/${itemId}`, {
+    return request<void>(`/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
       method: 'DELETE',
     });
   },

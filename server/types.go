@@ -3,7 +3,6 @@ package main
 type VulnerabilityItem struct {
 	ID             string   `json:"id"`
 	Name           string   `json:"name"`
-	ShortName      string   `json:"shortName"`
 	Description    string   `json:"description"`
 	VulnerableCode string   `json:"vulnerableCode"`
 	FixedCode      string   `json:"fixedCode"`
@@ -24,7 +23,6 @@ type VulnerabilityData struct {
 
 type ItemUpdateRequest struct {
 	Name           string   `json:"name"`
-	ShortName      string   `json:"shortName"`
 	Description    string   `json:"description"`
 	VulnerableCode string   `json:"vulnerableCode"`
 	FixedCode      string   `json:"fixedCode"`
@@ -34,7 +32,6 @@ type ItemUpdateRequest struct {
 }
 
 type CategoryCreateRequest struct {
-	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -43,9 +40,7 @@ type CategoryUpdateRequest struct {
 }
 
 type ItemCreateRequest struct {
-	ID             string   `json:"id"`
 	Name           string   `json:"name"`
-	ShortName      string   `json:"shortName"`
 	Description    string   `json:"description"`
 	VulnerableCode string   `json:"vulnerableCode"`
 	FixedCode      string   `json:"fixedCode"`

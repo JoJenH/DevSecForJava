@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -51,8 +52,8 @@ func HandleCreateCategory(store *Store) echo.HandlerFunc {
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
-		if req.ID == "" || req.Name == "" {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "id and name are required"})
+		if req.Name == "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "name is required"})
 		}
 		cat, err := store.CreateCategory(req)
 		if err != nil {
@@ -91,10 +92,11 @@ func HandleCreateItem(store *Store) echo.HandlerFunc {
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
-		if req.ID == "" || req.Name == "" {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "id and name are required"})
+		if req.Name == "" {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "name is required"})
 		}
 		item, err := store.CreateItem(c.Param("categoryId"), req)
+		fmt.Printf("[HANDLER] Calling store.CreateItem with categoryID=%s, name=%s\n", c.Param("categoryId"), req.Name)
 		if err != nil {
 			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
 		}

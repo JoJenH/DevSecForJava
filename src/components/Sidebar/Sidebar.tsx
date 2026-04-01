@@ -53,9 +53,9 @@ export function Sidebar({
                   <li key={item.id}>
                     <button
                       className={`item-button ${selectedItemId === item.id ? 'active' : ''}`}
-                      onClick={() => handleItemClick(item.id, category.id)}
+                      onClick={() => handleItemClick(item.id!, category.id)}
                     >
-                      {item.shortName}
+                      {item.name}
                     </button>
                   </li>
                 ))}
