@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -275,78 +276,73 @@ func (s *Store) DeleteItem(categoryID, itemID string) error {
 	return fmt.Errorf("category not found")
 }
 
-type AuthManager struct {
-	tokens map[string]time.Time
-	mu     sync.RWMutex
-}
+var jwtSecret []byte
 
-func NewAuthManager() *AuthManager {
-	return &AuthManager{
-		tokens: make(map[string]time.Time),
+func initJWT() {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		b := make([]byte, 32)
+		rand.Read(b)
+		secret = hex.EncodeToString(b)
+		fmt.Printf("🔑 Generated JWT secret\n")
+		fmt.Println("   Set JWT_SECRET env variable to use a custom secret.")
 	}
+	jwtSecret = []byte(secret)
 }
 
-func (a *AuthManager) GenerateToken() string {
-	b := make([]byte, 32)
-	rand.Read(b)
-	token := hex.EncodeToString(b)
-
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.tokens[token] = time.Now().Add(24 * time.Hour)
-
-	return token
+func generateToken() (string, error) {
+	claims := jwt.MapClaims{
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
+		"iat": time.Now().Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
 }
 
-func (a *AuthManager) ValidateToken(token string) bool {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
+func validateToken(tokenString string) bool {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return jwtSecret, nil
+	})
 
-	expiry, ok := a.tokens[token]
+	if err != nil || !token.Valid {
+		return false
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return false
 	}
-	return time.Now().Before(expiry)
-}
 
-func (a *AuthManager) RevokeToken(token string) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	delete(a.tokens, token)
-}
-
-func (a *AuthManager) cleanup() {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	now := time.Now()
-	for token, expiry := range a.tokens {
-		if now.After(expiry) {
-			delete(a.tokens, token)
-		}
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return false
 	}
+
+	return time.Now().Unix() < int64(exp)
 }
 
-func authMiddleware(auth *AuthManager) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			authHeader := c.Request().Header.Get("Authorization")
-			if authHeader == "" {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authorization header"})
-			}
-
-			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || parts[0] != "Bearer" {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authorization format"})
-			}
-
-			token := parts[1]
-			if !auth.ValidateToken(token) {
-				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid or expired token"})
-			}
-
-			c.Set("token", token)
-			return next(c)
+func authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		authHeader := c.Request().Header.Get("Authorization")
+		if authHeader == "" {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing authorization header"})
 		}
+
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid authorization format"})
+		}
+
+		token := parts[1]
+		if !validateToken(token) {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid or expired token"})
+		}
+
+		c.Set("token", token)
+		return next(c)
 	}
 }
 
@@ -405,14 +401,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	auth := NewAuthManager()
-
-	go func() {
-		ticker := time.NewTicker(1 * time.Hour)
-		for range ticker.C {
-			auth.cleanup()
-		}
-	}()
+	initJWT()
 
 	e := echo.New()
 	e.HideBanner = true
@@ -429,19 +418,11 @@ func main() {
 		if req.Password != adminPassword {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid password"})
 		}
-		token := auth.GenerateToken()
-		return c.JSON(http.StatusOK, LoginResponse{Token: token})
-	})
-
-	api.POST("/auth/logout", func(c echo.Context) error {
-		authHeader := c.Request().Header.Get("Authorization")
-		if authHeader != "" {
-			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) == 2 && parts[0] == "Bearer" {
-				auth.RevokeToken(parts[1])
-			}
+		token, err := generateToken()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate token"})
 		}
-		return c.NoContent(http.StatusNoContent)
+		return c.JSON(http.StatusOK, LoginResponse{Token: token})
 	})
 
 	api.GET("/auth/check", func(c echo.Context) error {
@@ -453,7 +434,7 @@ func main() {
 		if len(parts) != 2 || parts[0] != "Bearer" {
 			return c.JSON(http.StatusOK, map[string]bool{"authenticated": false})
 		}
-		valid := auth.ValidateToken(parts[1])
+		valid := validateToken(parts[1])
 		return c.JSON(http.StatusOK, map[string]bool{"authenticated": valid})
 	})
 
@@ -462,7 +443,7 @@ func main() {
 	})
 
 	admin := api.Group("")
-	admin.Use(authMiddleware(auth))
+	admin.Use(authMiddleware)
 
 	admin.POST("/categories", func(c echo.Context) error {
 		var req CategoryCreateRequest

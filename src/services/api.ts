@@ -77,17 +77,6 @@ export const auth = {
     }
   },
 
-  logout() {
-    const token = getToken();
-    if (token) {
-      fetch(`${API_BASE}/auth/logout`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-      }).catch(() => {});
-    }
-    clearToken();
-  },
-
   isAuthenticated(): boolean {
     return !!getToken();
   },
