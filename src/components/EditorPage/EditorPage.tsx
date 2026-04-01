@@ -8,6 +8,11 @@ interface EditorPageProps {
   onBack: () => void;
 }
 
+type InlineEditState = {
+  type: 'category' | 'item';
+  categoryId?: string;
+} | null;
+
 export function EditorPage({ onBack }: EditorPageProps) {
   const [categories, setCategories] = useState<VulnerabilityCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -16,7 +21,14 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [inlineEdit, setInlineEdit] = useState<InlineEditState>(null);
+  const [newCategoryId, setNewCategoryId] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newItemId, setNewItemId] = useState('');
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemShortName, setNewItemShortName] = useState('');
   const initialLoadDone = useRef(false);
+  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -112,6 +124,44 @@ export function EditorPage({ onBack }: EditorPageProps) {
     }
   };
 
+  const handleCreateCategoryInline = () => {
+    if (newCategoryId.trim() && newCategoryName.trim()) {
+      handleCreateCategory(newCategoryId.trim(), newCategoryName.trim());
+      setNewCategoryId('');
+      setNewCategoryName('');
+      setInlineEdit(null);
+    }
+  };
+
+  const handleCreateItemInline = (categoryId: string) => {
+    if (newItemId.trim() && newItemName.trim() && newItemShortName.trim()) {
+      handleCreateItem(categoryId, {
+        id: newItemId.trim(),
+        name: newItemName.trim(),
+        shortName: newItemShortName.trim(),
+        description: '',
+        vulnerableCode: '',
+        fixedCode: '',
+        auditPoints: [],
+        fixPoints: [],
+        poc: '',
+      });
+      setNewItemId('');
+      setNewItemName('');
+      setNewItemShortName('');
+      setInlineEdit(null);
+    }
+  };
+
+  const cancelInlineEdit = () => {
+    setInlineEdit(null);
+    setNewCategoryId('');
+    setNewCategoryName('');
+    setNewItemId('');
+    setNewItemName('');
+    setNewItemShortName('');
+  };
+
   const handleDeleteItem = async (categoryId: string, itemId: string) => {
     if (!confirm('确定要删除此条目吗？')) return;
     try {
@@ -170,11 +220,7 @@ export function EditorPage({ onBack }: EditorPageProps) {
             <button
               className="editor-add-btn"
               onClick={() => {
-                const id = prompt('请输入分类 ID（英文，如 sql-injection）:');
-                if (!id) return;
-                const name = prompt('请输入分类名称:');
-                if (!name) return;
-                handleCreateCategory(id.trim(), name.trim());
+                setInlineEdit({ type: 'category' });
               }}
             >
               + 新建分类
@@ -234,27 +280,63 @@ export function EditorPage({ onBack }: EditorPageProps) {
                         </button>
                       </li>
                     ))}
+                    {inlineEdit && inlineEdit.type === 'item' && inlineEdit.categoryId === category.id && (
+                      <li className="editor-inline-edit">
+                        <div className="inline-edit-row">
+                          <input
+                            type="text"
+                            placeholder="条目 ID (英文)"
+                            value={newItemId}
+                            onChange={e => setNewItemId(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') e.preventDefault();
+                              if (e.key === 'Escape') cancelInlineEdit();
+                            }}
+                            autoFocus
+                          />
+                          <input
+                            type="text"
+                            placeholder="条目名称"
+                            value={newItemName}
+                            onChange={e => setNewItemName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') e.preventDefault();
+                              if (e.key === 'Escape') cancelInlineEdit();
+                            }}
+                          />
+                          <input
+                            ref={newItemInputRef}
+                            type="text"
+                            placeholder="简称"
+                            value={newItemShortName}
+                            onChange={e => setNewItemShortName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleCreateItemInline(category.id);
+                              if (e.key === 'Escape') cancelInlineEdit();
+                            }}
+                          />
+                        </div>
+                        <div className="inline-edit-actions">
+                          <button
+                            className="inline-edit-btn inline-edit-btn--primary"
+                            onClick={() => handleCreateItemInline(category.id)}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            className="inline-edit-btn inline-edit-btn--cancel"
+                            onClick={cancelInlineEdit}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </li>
+                    )}
                     <li>
                       <button
                         className="editor-add-item-btn"
                         onClick={() => {
-                          const id = prompt('请输入条目 ID（英文，如 sql-jdbc）:');
-                          if (!id) return;
-                          const name = prompt('请输入条目名称:');
-                          if (!name) return;
-                          const shortName = prompt('请输入简称:');
-                          if (!shortName) return;
-                          handleCreateItem(category.id, {
-                            id: id.trim(),
-                            name: name.trim(),
-                            shortName: shortName.trim(),
-                            description: '',
-                            vulnerableCode: '',
-                            fixedCode: '',
-                            auditPoints: [],
-                            fixPoints: [],
-                            poc: '',
-                          });
+                          setInlineEdit({ type: 'item', categoryId: category.id });
                         }}
                       >
                         + 新建条目
@@ -264,6 +346,47 @@ export function EditorPage({ onBack }: EditorPageProps) {
                 )}
               </div>
             ))}
+            {inlineEdit && inlineEdit.type === 'category' && (
+              <div className="editor-inline-edit">
+                <div className="inline-edit-row">
+                  <input
+                    type="text"
+                    placeholder="分类 ID (英文)"
+                    value={newCategoryId}
+                    onChange={e => setNewCategoryId(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') e.preventDefault();
+                      if (e.key === 'Escape') cancelInlineEdit();
+                    }}
+                    autoFocus
+                  />
+                  <input
+                    type="text"
+                    placeholder="分类名称"
+                    value={newCategoryName}
+                    onChange={e => setNewCategoryName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleCreateCategoryInline();
+                      if (e.key === 'Escape') cancelInlineEdit();
+                    }}
+                  />
+                </div>
+                <div className="inline-edit-actions">
+                  <button
+                    className="inline-edit-btn inline-edit-btn--primary"
+                    onClick={handleCreateCategoryInline}
+                  >
+                    ✓
+                  </button>
+                  <button
+                    className="inline-edit-btn inline-edit-btn--cancel"
+                    onClick={cancelInlineEdit}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

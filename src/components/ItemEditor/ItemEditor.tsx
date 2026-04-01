@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { useTheme } from '../../hooks/useTheme';
 import type { VulnerabilityItem } from '../../types';
@@ -11,58 +11,96 @@ interface ItemEditorProps {
   saving: boolean;
 }
 
-type TagListEditorProps = {
+type ListEditorProps = {
   label: string;
-  tags: string[];
-  onChange: (tags: string[]) => void;
+  items: string[];
+  onChange: (items: string[]) => void;
 };
 
-function TagListEditor({ label, tags, onChange }: TagListEditorProps) {
-  const [input, setInput] = useState('');
+function ListEditor({ label, items, onChange }: ListEditorProps) {
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
 
   const handleAdd = () => {
-    const trimmed = input.trim();
-    if (trimmed && !tags.includes(trimmed)) {
-      onChange([...tags, trimmed]);
-      setInput('');
-    }
+    onChange([...items, '']);
+    setEditingIndex(items.length);
+    setEditValue('');
   };
 
   const handleRemove = (index: number) => {
-    onChange(tags.filter((_, i) => i !== index));
+    onChange(items.filter((_, i) => i !== index));
+  };
+
+  const handleUpdate = (index: number, value: string) => {
+    const newItems = [...items];
+    newItems[index] = value;
+    onChange(newItems);
+  };
+
+  const handleStartEdit = (index: number) => {
+    setEditingIndex(index);
+    setEditValue(items[index]);
+  };
+
+  const handleFinishEdit = () => {
+    if (editingIndex !== null) {
+      handleUpdate(editingIndex, editValue);
+      setEditingIndex(null);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleAdd();
+      handleFinishEdit();
+    } else if (e.key === 'Escape') {
+      setEditingIndex(null);
     }
   };
 
   return (
-    <div className="tag-list-editor">
-      <label className="editor-label">{label}</label>
-      <div className="tag-input-row">
-        <input
-          type="text"
-          className="editor-input tag-input"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="输入后按 Enter 添加"
-        />
-        <button className="tag-add-btn" onClick={handleAdd} disabled={!input.trim()}>
-          添加
+    <div className="list-editor">
+      <div className="list-editor-header">
+        <label className="editor-label">{label}</label>
+        <button className="list-add-btn" onClick={handleAdd}>
+          + 添加
         </button>
       </div>
-      <div className="tag-list">
-        {tags.map((tag, index) => (
-          <span key={index} className="tag-item">
-            {tag}
-            <button className="tag-remove" onClick={() => handleRemove(index)}>✕</button>
-          </span>
+      <ol className="ordered-list">
+        {items.map((item, index) => (
+          <li key={index} className="list-item">
+            {editingIndex === index ? (
+              <div className="list-item-edit">
+                <input
+                  type="text"
+                  className="list-item-input"
+                  value={editValue}
+                  onChange={e => setEditValue(e.target.value)}
+                  onBlur={handleFinishEdit}
+                  onKeyDown={handleKeyDown}
+                  autoFocus
+                />
+              </div>
+            ) : (
+              <div className="list-item-view" onClick={() => handleStartEdit(index)}>
+                <span className="list-item-text">{item || '点击编辑...'}</span>
+              </div>
+            )}
+            <button
+              className="list-item-remove"
+              onClick={() => handleRemove(index)}
+              title="删除"
+            >
+              ✕
+            </button>
+          </li>
         ))}
-      </div>
+      </ol>
+      {items.length === 0 && (
+        <div className="list-empty">
+          <span className="list-empty-text">暂无条目，点击「添加」开始</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -80,6 +118,11 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
     poc: item.poc,
   });
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // 当保存成功或item变化时重置hasChanges
+  useEffect(() => {
+    setHasChanges(false);
+  }, [item]);
 
   const updateField = useCallback(<K extends keyof typeof form>(key: K, value: typeof form[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -208,18 +251,18 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
         </div>
 
         <div className="editor-section">
-          <TagListEditor
+          <ListEditor
             label="审计要点"
-            tags={form.auditPoints}
-            onChange={tags => updateField('auditPoints', tags)}
+            items={form.auditPoints}
+            onChange={items => updateField('auditPoints', items)}
           />
         </div>
 
         <div className="editor-section">
-          <TagListEditor
+          <ListEditor
             label="修复要点"
-            tags={form.fixPoints}
-            onChange={tags => updateField('fixPoints', tags)}
+            items={form.fixPoints}
+            onChange={items => updateField('fixPoints', items)}
           />
         </div>
 
