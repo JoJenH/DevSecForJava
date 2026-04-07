@@ -313,7 +313,10 @@ func serializeToMarkdown(data VulnerabilityData) string {
 			}
 
 			if item.POC != "" {
-				sb.WriteString(fmt.Sprintf("### POC\n\n%s\n\n", item.POC))
+				sb.WriteString("### POC\n\n")
+				sb.WriteString("```\n")
+				sb.WriteString(item.POC)
+				sb.WriteString("\n```\n\n")
 			}
 
 			sb.WriteString("---\n\n")
