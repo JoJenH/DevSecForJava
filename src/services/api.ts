@@ -76,10 +76,6 @@ export const auth = {
       return false;
     }
   },
-
-  isAuthenticated(): boolean {
-    return !!getToken();
-  },
 };
 
 export const api = {
@@ -132,5 +128,38 @@ export const api = {
     return request<void>(`/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
       method: 'DELETE',
     });
+  },
+
+  async exportYaml(): Promise<string> {
+    const res = await fetch(`${API_BASE}/export/yaml`);
+    if (!res.ok) {
+      throw new Error(`Export failed: ${res.status}`);
+    }
+    return res.text();
+  },
+
+  async importYaml(file: File): Promise<void> {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/import/yaml`, {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Import failed' }));
+      throw new Error(error.error || 'Import failed');
+    }
+  },
+
+  async exportMarkdown(): Promise<string> {
+    const res = await fetch(`${API_BASE}/export/markdown`);
+    if (!res.ok) {
+      throw new Error(`Export failed: ${res.status}`);
+    }
+    return res.text();
   },
 };

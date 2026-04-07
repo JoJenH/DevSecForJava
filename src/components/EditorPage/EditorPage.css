@@ -45,6 +45,31 @@
   margin: 0;
   font-family: var(--sans);
   letter-spacing: -0.2px;
+  flex: 1;
+}
+
+.editor-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.editor-toolbar-btn {
+  padding: 6px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--sans);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editor-toolbar-btn:hover {
+  background: var(--bg4);
+  border-color: var(--accent);
+  color: var(--accent2);
 }
 
 .editor-save-message {

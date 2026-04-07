@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -96,7 +95,6 @@ func HandleCreateItem(store *Store) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "name is required"})
 		}
 		item, err := store.CreateItem(c.Param("categoryId"), req)
-		fmt.Printf("[HANDLER] Calling store.CreateItem with categoryID=%s, name=%s\n", c.Param("categoryId"), req.Name)
 		if err != nil {
 			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
 		}
@@ -127,6 +125,19 @@ func HandleDeleteItem(store *Store) echo.HandlerFunc {
 	}
 }
 
+func HandleExportYAML(store *Store) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		data := store.GetAll()
+		yamlData, err := SaveToYAMLString(data)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		c.Response().Header().Set("Content-Type", "text/yaml; charset=utf-8")
+		c.Response().Header().Set("Content-Disposition", "attachment; filename=vulnerabilities.yaml")
+		return c.String(http.StatusOK, yamlData)
+	}
+}
+
 func HandleExportMarkdown(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		data := store.GetAll()
@@ -137,9 +148,8 @@ func HandleExportMarkdown(store *Store) echo.HandlerFunc {
 	}
 }
 
-func HandleImportMarkdown(store *Store) echo.HandlerFunc {
+func HandleImportYAML(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Read the uploaded file
 		file, err := c.FormFile("file")
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "file is required"})
@@ -151,20 +161,17 @@ func HandleImportMarkdown(store *Store) echo.HandlerFunc {
 		}
 		defer src.Close()
 
-		// Read file content
 		buf := make([]byte, file.Size)
 		_, err = src.Read(buf)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
 		}
 
-		// Parse markdown
-		data, err := ImportFromMarkdown(string(buf))
+		data, err := LoadFromYAMLString(string(buf))
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("failed to parse markdown: %v", err)})
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
 
-		// Replace store data
 		if err := store.ReplaceData(data); err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}

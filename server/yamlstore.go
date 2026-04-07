@@ -55,3 +55,31 @@ func SaveToYAML(path string, data VulnerabilityData) error {
 
 	return os.WriteFile(absPath, yamlData, 0644)
 }
+
+func SaveToYAMLString(data VulnerabilityData) (string, error) {
+	yamlData, err := yaml.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal YAML: %w", err)
+	}
+	return string(yamlData), nil
+}
+
+func LoadFromYAMLString(content string) (VulnerabilityData, error) {
+	var vulnData VulnerabilityData
+	if err := yaml.Unmarshal([]byte(content), &vulnData); err != nil {
+		return VulnerabilityData{}, fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	for i := range vulnData.Categories {
+		if vulnData.Categories[i].ID == "" {
+			vulnData.Categories[i].ID = generateID(vulnData.Categories[i].Name)
+		}
+		for j := range vulnData.Categories[i].Items {
+			if vulnData.Categories[i].Items[j].ID == "" {
+				vulnData.Categories[i].Items[j].ID = generateID(vulnData.Categories[i].Items[j].Name)
+			}
+		}
+	}
+
+	return vulnData, nil
+}

@@ -18,3 +18,22 @@ categories:
             - 使用命令数组
             - 验证输入参数
           poc: 传入 host = "127.0.0.1; cat /etc/passwd"
+    - id: 9d382cab8959fa62
+      name: SQL 注入
+      items:
+        - id: f98cbc2dd7c9dc9e
+          name: JDBC
+          description: DESC
+          vulnerablecode: a
+          fixedcode: b
+          auditpoints:
+            - "1111"
+            - "2222"
+          fixpoints:
+            - "2222"
+          poc: |-
+            ```shell
+            cat /etc/passwd
+            ```
+            ### POC
+            内容

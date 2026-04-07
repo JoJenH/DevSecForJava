@@ -80,6 +80,8 @@ func main() {
 	api.POST("/auth/login", HandleLogin(adminPassword))
 	api.GET("/auth/check", HandleAuthCheck())
 	api.GET("/data", HandleGetData(store))
+	api.GET("/export/yaml", HandleExportYAML(store))
+	api.GET("/export/markdown", HandleExportMarkdown(store))
 
 	admin := api.Group("")
 	admin.Use(AuthMiddleware)
@@ -90,8 +92,7 @@ func main() {
 	admin.POST("/categories/:categoryId/items", HandleCreateItem(store))
 	admin.PUT("/categories/:categoryId/items/:itemId", HandleUpdateItem(store))
 	admin.DELETE("/categories/:categoryId/items/:itemId", HandleDeleteItem(store))
-	admin.GET("/export/markdown", HandleExportMarkdown(store))
-	admin.POST("/import/markdown", HandleImportMarkdown(store))
+	admin.POST("/import/yaml", HandleImportYAML(store))
 
 	distDir := http.Dir(distPath)
 

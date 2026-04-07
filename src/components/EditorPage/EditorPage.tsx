@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../services/api';
 import type { VulnerabilityCategory, VulnerabilityItem } from '../../types';
 import { ItemEditor } from '../ItemEditor/ItemEditor';
@@ -24,7 +24,6 @@ export function EditorPage({ onBack }: EditorPageProps) {
   const [inlineEdit, setInlineEdit] = useState<InlineEditState>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newItemName, setNewItemName] = useState('');
-  const initialLoadDone = useRef(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -43,10 +42,7 @@ export function EditorPage({ onBack }: EditorPageProps) {
   }, []);
 
   useEffect(() => {
-    if (!initialLoadDone.current) {
-      initialLoadDone.current = true;
-      loadData();
-    }
+    loadData();
   }, [loadData]);
 
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
@@ -150,6 +146,53 @@ export function EditorPage({ onBack }: EditorPageProps) {
     setNewItemName('');
   };
 
+  const handleExportYaml = async () => {
+    try {
+      const content = await api.exportYaml();
+      const blob = new Blob([content], { type: 'text/yaml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vulnerabilities.yaml';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '导出失败');
+    }
+  };
+
+  const handleExportMarkdown = async () => {
+    try {
+      const content = await api.exportMarkdown();
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vulnerabilities.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '导出失败');
+    }
+  };
+
+  const handleImportYaml = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.yaml,.yml';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        await api.importYaml(file);
+        await loadData();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '导入失败');
+      }
+    };
+    input.click();
+  };
+
   const handleDeleteItem = async (categoryId: string, itemId: string) => {
     if (!confirm('确定要删除此条目吗？')) return;
     try {
@@ -196,6 +239,17 @@ export function EditorPage({ onBack }: EditorPageProps) {
           ← 返回查看
         </button>
         <h1 className="editor-title">文档编辑器</h1>
+        <div className="editor-toolbar-actions">
+          <button className="editor-toolbar-btn" onClick={handleExportMarkdown} title="导出 Markdown">
+            📄 Markdown
+          </button>
+          <button className="editor-toolbar-btn" onClick={handleExportYaml} title="导出 YAML">
+            📄 YAML
+          </button>
+          <button className="editor-toolbar-btn" onClick={handleImportYaml} title="导入 YAML">
+            📥 导入
+          </button>
+        </div>
         {saveMessage && <span className="editor-save-message">{saveMessage}</span>}
       </div>
 

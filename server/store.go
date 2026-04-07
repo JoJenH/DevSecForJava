@@ -37,12 +37,6 @@ func (s *Store) load() error {
 	return nil
 }
 
-// func (s *Store) save() error {
-// 	s.mu.Lock()
-// 	defer s.mu.Unlock()
-// 	return s.saveLocked()
-// }
-
 func (s *Store) saveLocked() error {
 	absPath, err := filepath.Abs(s.path)
 	if err != nil {

@@ -29,12 +29,14 @@ run() {
   echo ""
   echo "🚀 Starting server..."
   cd "$PROJECT_DIR"
+  export ADMIN_PASSWORD="123"
   exec "$BINARY"
 }
 
 case "$CMD" in
   build)
     build
+    run
     ;;
   run)
     run

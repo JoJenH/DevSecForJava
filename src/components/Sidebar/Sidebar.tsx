@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import type { VulnerabilityCategory } from '../../types';
+import { api } from '../../services/api';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -27,6 +28,36 @@ export function Sidebar({
 
   const handleItemClick = (itemId: string, categoryId: string) => {
     onSelectItem(itemId, categoryId);
+  };
+
+  const handleExportYaml = async () => {
+    try {
+      const content = await api.exportYaml();
+      const blob = new Blob([content], { type: 'text/yaml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vulnerabilities.yaml';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('导出失败:', err);
+    }
+  };
+
+  const handleExportMarkdown = async () => {
+    try {
+      const content = await api.exportMarkdown();
+      const blob = new Blob([content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vulnerabilities.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('导出失败:', err);
+    }
   };
 
   return (
@@ -64,6 +95,14 @@ export function Sidebar({
           </div>
         ))}
       </nav>
+      <div className="sidebar-footer">
+        <button className="sidebar-export-btn" onClick={handleExportYaml}>
+          导出 YAML
+        </button>
+        <button className="sidebar-export-btn" onClick={handleExportMarkdown}>
+          导出 MD
+        </button>
+      </div>
     </aside>
   );
 }

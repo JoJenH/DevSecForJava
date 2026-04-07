@@ -32,18 +32,18 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <h1 className="login-title">管理后台</h1>
+          <h1 className="login-title">编辑模式</h1>
           <p className="login-subtitle">安全开发指南 - 文档管理系统</p>
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">
-            <label className="login-label">管理员密码</label>
+            <label className="login-label">访问令牌</label>
             <input
               type="password"
               className="login-input"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder="请输入管理员密码"
+              placeholder="请输入访问令牌"
               autoFocus
               disabled={loading}
             />
