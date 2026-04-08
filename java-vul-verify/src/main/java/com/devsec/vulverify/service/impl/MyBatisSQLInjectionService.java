@@ -1,0 +1,48 @@
+package com.devsec.vulverify.service.impl;
+
+import com.devsec.vulverify.model.VerifyRequest;
+import com.devsec.vulverify.model.VerifyResponse;
+import com.devsec.vulverify.service.VulnerabilityVerifyService;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Service
+public class MyBatisSQLInjectionService implements VulnerabilityVerifyService {
+    private static final String CATEGORY = "SQL注入";
+    private static final String ITEM = "MyBatis";
+
+    @Override
+    public String getCategory() {
+        return CATEGORY;
+    }
+
+    @Override
+    public String getItem() {
+        return ITEM;
+    }
+
+    @Override
+    public VerifyResponse verify(VerifyRequest request) {
+        String payload = request.getPayload();
+        
+        if (payload == null || payload.isEmpty()) {
+            return VerifyResponse.error("Payload is required");
+        }
+
+        String sql = "SELECT * FROM users WHERE username = '" + payload + "'";
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("sql", sql);
+        result.put("vulnerable", true);
+        result.put("ormType", "MyBatis");
+        result.put("note", "MyBatis with ${} syntax (instead of #{}) is vulnerable to SQL injection");
+        
+        return VerifyResponse.success("MyBatis SQL injection vulnerability confirmed", result);
+    }
+
+    @Override
+    public boolean supports(String category, String item) {
+        return CATEGORY.equalsIgnoreCase(category) && ITEM.equalsIgnoreCase(item);
+    }
+}

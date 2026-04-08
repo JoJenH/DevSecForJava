@@ -51,7 +51,8 @@ func SaveToYAML(path string, data VulnerabilityData) error {
 	}
 
 	dir := filepath.Dir(absPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
 		return err
 	}
 

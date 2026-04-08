@@ -1,0 +1,99 @@
+package com.devsec.vulverify.service.impl;
+
+import com.devsec.vulverify.model.VerifyRequest;
+import com.devsec.vulverify.model.VerifyResponse;
+import com.devsec.vulverify.service.VulnerabilityVerifyService;
+import org.springframework.stereotype.Service;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class JDBCSQLInjectionService implements VulnerabilityVerifyService {
+    private static final String CATEGORY = "SQL注入";
+    private static final String ITEM = "JDBC";
+    private static final String DB_URL = "jdbc:h2:mem:vuldb";
+    private static final String DB_USER = "sa";
+    private static final String DB_PASSWORD = "";
+
+    static {
+        try {
+            Class.forName("org.h2.Driver");
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                Statement stmt = conn.createStatement();
+                stmt.execute("CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY, username VARCHAR(255), password VARCHAR(255))");
+                stmt.execute("INSERT INTO users VALUES (1, 'admin', 'admin123')");
+                stmt.execute("INSERT INTO users VALUES (2, 'test', 'test123')");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String getCategory() {
+        return CATEGORY;
+    }
+
+    @Override
+    public String getItem() {
+        return ITEM;
+    }
+
+    @Override
+    public VerifyResponse verify(VerifyRequest request) {
+        String payload = request.getPayload();
+        
+        if (payload == null || payload.isEmpty()) {
+            return VerifyResponse.error("Payload is required");
+        }
+
+        String sql = "SELECT * FROM users WHERE username = '" + payload + "'";
+        
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement()) {
+            
+            boolean hasResults = stmt.execute(sql);
+            List<Map<String, Object>> results = new ArrayList<>();
+            
+            if (hasResults) {
+                ResultSet rs = stmt.getResultSet();
+                ResultSetMetaData metaData = rs.getMetaData();
+                int columnCount = metaData.getColumnCount();
+                
+                while (rs.next()) {
+                    Map<String, Object> row = new HashMap<>();
+                    for (int i = 1; i <= columnCount; i++) {
+                        row.put(metaData.getColumnLabel(i), rs.getObject(i));
+                    }
+                    results.add(row);
+                }
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("sql", sql);
+            result.put("executed", true);
+            result.put("results", results);
+            result.put("resultCount", results.size());
+            
+            return VerifyResponse.success("SQL injection vulnerability confirmed", result);
+            
+        } catch (SQLException e) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("sql", sql);
+            result.put("executed", true);
+            result.put("error", e.getMessage());
+            result.put("errorCode", e.getErrorCode());
+            
+            return VerifyResponse.success("SQL injection test completed", result);
+        }
+    }
+
+    @Override
+    public boolean supports(String category, String item) {
+        return CATEGORY.equalsIgnoreCase(category) && ITEM.equalsIgnoreCase(item);
+    }
+}

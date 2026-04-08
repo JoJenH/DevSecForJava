@@ -1,0 +1,89 @@
+package com.devsec.vulverify.service.impl;
+
+import com.devsec.vulverify.model.VerifyRequest;
+import com.devsec.vulverify.model.VerifyResponse;
+import com.devsec.vulverify.service.VulnerabilityVerifyService;
+import jakarta.persistence.*;
+import org.hibernate.Session;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Service
+public class HibernateSQLInjectionService implements VulnerabilityVerifyService {
+    private static final String CATEGORY = "SQL注入";
+    private static final String ITEM = "Hibernate";
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    public String getCategory() {
+        return CATEGORY;
+    }
+
+    @Override
+    public String getItem() {
+        return ITEM;
+    }
+
+    @Override
+    public VerifyResponse verify(VerifyRequest request) {
+        String payload = request.getPayload();
+        
+        if (payload == null || payload.isEmpty()) {
+            return VerifyResponse.error("Payload is required");
+        }
+
+        String hql = "FROM User WHERE username = '" + payload + "'";
+        
+        try {
+            Session session = entityManager.unwrap(Session.class);
+            Query query = session.createQuery(hql);
+            List<?> results = query.getResultList();
+            
+            List<Map<String, Object>> resultList = new ArrayList<>();
+            for (Object obj : results) {
+                resultList.add(objectToMap(obj));
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("hql", hql);
+            result.put("executed", true);
+            result.put("results", resultList);
+            result.put("resultCount", resultList.size());
+            result.put("ormType", "Hibernate");
+            
+            return VerifyResponse.success("Hibernate SQL injection vulnerability confirmed", result);
+            
+        } catch (Exception e) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("hql", hql);
+            result.put("executed", true);
+            result.put("error", e.getMessage());
+            result.put("ormType", "Hibernate");
+            
+            return VerifyResponse.success("Hibernate SQL injection test completed", result);
+        }
+    }
+
+    private Map<String, Object> objectToMap(Object obj) {
+        Map<String, Object> map = new HashMap<>();
+        if (obj != null) {
+            for (var field : obj.getClass().getDeclaredFields()) {
+                field.setAccessible(true);
+                try {
+                    map.put(field.getName(), field.get(obj));
+                } catch (Exception e) {
+                    map.put(field.getName(), "N/A");
+                }
+            }
+        }
+        return map;
+    }
+
+    @Override
+    public boolean supports(String category, String item) {
+        return CATEGORY.equalsIgnoreCase(category) && ITEM.equalsIgnoreCase(item);
+    }
+}

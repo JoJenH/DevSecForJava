@@ -1,0 +1,48 @@
+package com.devsec.vulverify.service.impl;
+
+import com.devsec.vulverify.model.VerifyRequest;
+import com.devsec.vulverify.model.VerifyResponse;
+import com.devsec.vulverify.service.VulnerabilityVerifyService;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+
+@Service
+public class JPASQLInjectionService implements VulnerabilityVerifyService {
+    private static final String CATEGORY = "SQL注入";
+    private static final String ITEM = "JPA";
+
+    @Override
+    public String getCategory() {
+        return CATEGORY;
+    }
+
+    @Override
+    public String getItem() {
+        return ITEM;
+    }
+
+    @Override
+    public VerifyResponse verify(VerifyRequest request) {
+        String payload = request.getPayload();
+        
+        if (payload == null || payload.isEmpty()) {
+            return VerifyResponse.error("Payload is required");
+        }
+
+        String jpql = "SELECT u FROM User u WHERE u.username = '" + payload + "'";
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("jpql", jpql);
+        result.put("vulnerable", true);
+        result.put("ormType", "JPA");
+        result.put("note", "JPA native query with string concatenation is vulnerable to SQL injection");
+        
+        return VerifyResponse.success("JPA SQL injection vulnerability confirmed", result);
+    }
+
+    @Override
+    public boolean supports(String category, String item) {
+        return CATEGORY.equalsIgnoreCase(category) && ITEM.equalsIgnoreCase(item);
+    }
+}

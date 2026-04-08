@@ -1,0 +1,15 @@
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/impl/RCEVerifyService.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/impl/HibernateSQLInjectionService.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/config/VulnerabilityServiceConfig.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/impl/JDBCSQLInjectionService.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/VulnerabilityServiceRegistry.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/impl/MyBatisSQLInjectionService.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/model/VerifyRequest.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/VulnerabilityVerifyService.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/controller/VulnerabilityController.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/VulVerifyApplication.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/config/GlobalExceptionHandler.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/config/WebConfig.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/service/impl/JPASQLInjectionService.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/model/VerifyResponse.java
+/Users/jojenh/Project/DevSec/java-vul-verify/src/main/java/com/devsec/vulverify/model/VulnerabilityCategory.java

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -31,6 +33,14 @@ func spaFallback(fs http.FileSystem) echo.HandlerFunc {
 		c.Response().Write(indexBytes)
 		return nil
 	}
+}
+
+func createProxy(target string) *httputil.ReverseProxy {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		return nil
+	}
+	return httputil.NewSingleHostReverseProxy(targetURL)
 }
 
 func main() {
@@ -60,6 +70,11 @@ func main() {
 	distPath := os.Getenv("DIST_PATH")
 	if distPath == "" {
 		distPath = filepath.Join(execDir, "dist")
+	}
+
+	javaAddr := os.Getenv("JAVA_SERVICE_ADDR")
+	if javaAddr == "" {
+		javaAddr = "http://localhost:8081"
 	}
 
 	store, err := NewStore(dataPath)
@@ -93,6 +108,10 @@ func main() {
 	edit.DELETE("/categories/:categoryId/items/:itemId", HandleDeleteItem(store))
 	edit.POST("/import/yaml", HandleImportYAML(store))
 
+	vulProxy := createProxy(javaAddr)
+	e.Any("/vul/*", echo.WrapHandler(vulProxy))
+	e.GET("/vul", echo.WrapHandler(vulProxy))
+
 	distDir := http.Dir(distPath)
 
 	e.GET("/assets/*", echo.WrapHandler(http.StripPrefix("/", http.FileServer(distDir))))
@@ -113,5 +132,6 @@ func main() {
 	fmt.Printf("🚀 Server starting on %s\n", addr)
 	fmt.Printf("   Data: %s\n", dataPath)
 	fmt.Printf("   Dist: %s\n", distPath)
+	fmt.Printf("   Java: %s\n", javaAddr)
 	e.Logger.Fatal(e.Start(addr))
 }
