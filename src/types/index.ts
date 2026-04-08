@@ -15,10 +15,6 @@ export interface VulnerabilityCategory {
   items: VulnerabilityItem[];
 }
 
-export interface VulnerabilityData {
-  categories: VulnerabilityCategory[];
-}
-
 export interface CategoryInfo {
   name: string;
 }

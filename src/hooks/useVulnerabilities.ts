@@ -36,7 +36,6 @@ export function useCategory(name: string | null) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('[useCategory] name changed:', name);
     if (!name) {
       setCategory(null);
       return;
@@ -45,13 +44,11 @@ export function useCategory(name: string | null) {
     setLoading(true);
     api.getCategory(name)
       .then(data => {
-        console.log('[useCategory] got data for:', name);
         const parsed = parseMarkdown(data.content);
         setCategory(parsed);
         setError(null);
       })
       .catch(err => {
-        console.error('[useCategory] error:', err);
         setError(err.message);
         setCategory(null);
       })
