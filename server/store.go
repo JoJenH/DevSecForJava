@@ -128,6 +128,8 @@ func (s *Store) CreateItem(categoryID string, req ItemCreateRequest) (*Vulnerabi
 				AuditPoints:    req.AuditPoints,
 				FixPoints:      req.FixPoints,
 				POC:            req.POC,
+				VerifyUrl:      req.VerifyUrl,
+				Payload:        req.Payload,
 			}
 			s.data.Categories[i].Items = append(s.data.Categories[i].Items, newItem)
 			if err := s.saveLocked(); err != nil {
@@ -156,6 +158,8 @@ func (s *Store) UpdateItem(categoryID, itemID string, req ItemUpdateRequest) (*V
 					item.AuditPoints = req.AuditPoints
 					item.FixPoints = req.FixPoints
 					item.POC = req.POC
+					item.VerifyUrl = req.VerifyUrl
+					item.Payload = req.Payload
 					if err := s.saveLocked(); err != nil {
 						return nil, err
 					}

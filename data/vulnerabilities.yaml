@@ -18,6 +18,7 @@ categories:
             - 使用命令数组
             - 验证输入参数
           poc: 传入 host = "127.0.0.1; cat /etc/passwd"
+          verifyurl: http://127.0.0.1:8080
     - id: 9d382cab8959fa62
       name: SQL 注入
       items:
@@ -37,3 +38,4 @@ categories:
             ```
             ### POC
             内容
+          verifyurl: ""

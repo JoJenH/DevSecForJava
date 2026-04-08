@@ -194,3 +194,119 @@
   color: var(--text);
   border-color: var(--accent);
 }
+
+.poc-verify-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.poc-verify-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.poc-verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.poc-verify-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.poc-verify-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.poc-verify-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--mono);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.poc-verify-input:focus {
+  border-color: var(--accent);
+}
+
+.poc-verify-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.poc-response {
+  margin-top: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.poc-response--error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.poc-response--success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.poc-response-header {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+}
+
+.poc-response--error .poc-response-header {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.poc-response--success .poc-response-header {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.poc-response-content {
+  margin: 0;
+  padding: 12px;
+  font-size: 12px;
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}

@@ -9,6 +9,8 @@ type VulnerabilityItem struct {
 	AuditPoints    []string `json:"auditPoints"`
 	FixPoints      []string `json:"fixPoints"`
 	POC            string   `json:"poc"`
+	VerifyUrl      string   `json:"verifyUrl,omitempty"`
+	Payload        string   `json:"payload,omitempty"`
 }
 
 type VulnerabilityCategory struct {
@@ -29,6 +31,8 @@ type ItemUpdateRequest struct {
 	AuditPoints    []string `json:"auditPoints"`
 	FixPoints      []string `json:"fixPoints"`
 	POC            string   `json:"poc"`
+	VerifyUrl      string   `json:"verifyUrl,omitempty"`
+	Payload        string   `json:"payload,omitempty"`
 }
 
 type CategoryCreateRequest struct {
@@ -47,6 +51,8 @@ type ItemCreateRequest struct {
 	AuditPoints    []string `json:"auditPoints"`
 	FixPoints      []string `json:"fixPoints"`
 	POC            string   `json:"poc"`
+	VerifyUrl      string   `json:"verifyUrl,omitempty"`
+	Payload        string   `json:"payload,omitempty"`
 }
 
 type LoginRequest struct {

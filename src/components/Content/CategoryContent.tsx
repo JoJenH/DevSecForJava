@@ -132,7 +132,7 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
                 fixPoints={item.fixPoints}
               />
 
-              <POC poc={item.poc} />
+              <POC poc={item.poc} verifyUrl={item.verifyUrl} defaultPayload={item.payload} />
             </div>
 
             {index < category.items.length - 1 && <div className="item-divider" />}

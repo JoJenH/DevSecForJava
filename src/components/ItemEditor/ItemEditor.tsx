@@ -115,6 +115,8 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
     auditPoints: [...item.auditPoints],
     fixPoints: [...item.fixPoints],
     poc: item.poc,
+    verifyUrl: item.verifyUrl || '',
+    payload: item.payload || '',
   });
   const [hasChanges, setHasChanges] = useState(false);
   
@@ -140,6 +142,8 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
       auditPoints: [...item.auditPoints],
       fixPoints: [...item.fixPoints],
       poc: item.poc,
+      verifyUrl: item.verifyUrl || '',
+      payload: item.payload || '',
     });
     setHasChanges(false);
   };
@@ -273,6 +277,30 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
               automaticLayout: true,
               wordWrap: 'on',
             }}
+          />
+        </div>
+
+        <div className="editor-section">
+          <div className="editor-section-header">
+            <span className="editor-section-icon">🔗</span>
+            <h3 className="editor-section-title">验证接口</h3>
+          </div>
+          <input
+            type="text"
+            className="editor-input"
+            value={form.verifyUrl}
+            onChange={e => updateField('verifyUrl', e.target.value)}
+            placeholder="输入 POST 接口地址，如 https://example.com/api/test"
+          />
+          <p className="editor-hint">POC 内容将作为 payload 参数发送 POST 请求</p>
+          
+          <label className="editor-label">Payload</label>
+          <textarea
+            className="editor-textarea"
+            value={form.payload}
+            onChange={e => updateField('payload', e.target.value)}
+            placeholder="输入验证用的 payload"
+            rows={3}
           />
         </div>
       </div>

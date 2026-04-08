@@ -5,6 +5,8 @@ import './POC.css';
 
 interface POCProps {
   poc: string;
+  verifyUrl?: string;
+  defaultPayload?: string;
 }
 
 function CodeBlock({ children, className }: { children?: React.ReactNode; className?: string }) {
@@ -33,7 +35,37 @@ function CodeBlock({ children, className }: { children?: React.ReactNode; classN
   return <code className={className}>{children}</code>;
 }
 
-export function POC({ poc }: POCProps) {
+export function POC({ poc, verifyUrl, defaultPayload = '' }: POCProps) {
+  const [verifying, setVerifying] = useState(false);
+  const [response, setResponse] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [payload, setPayload] = useState(defaultPayload);
+
+  const handleVerify = useCallback(async () => {
+    if (!verifyUrl || !payload) return;
+    
+    setVerifying(true);
+    setError(null);
+    setResponse(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('payload', payload);
+      
+      const res = await fetch(verifyUrl, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const text = await res.text();
+      setResponse(`${res.status} ${res.statusText}\n\n${text}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '请求失败');
+    } finally {
+      setVerifying(false);
+    }
+  }, [verifyUrl, payload]);
+
   return (
     <div className="poc-section">
       <div className="poc-header">
@@ -49,6 +81,40 @@ export function POC({ poc }: POCProps) {
             {poc}
           </ReactMarkdown>
         </div>
+        
+        {verifyUrl && (
+          <div className="poc-verify-section">
+            <label className="poc-verify-label">Payload</label>
+            <textarea
+              className="poc-verify-input"
+              value={payload}
+              onChange={e => setPayload(e.target.value)}
+              placeholder="输入验证用的 payload"
+              rows={4}
+            />
+            <button 
+              className="poc-verify-btn" 
+              onClick={handleVerify}
+              disabled={verifying || !payload}
+            >
+              {verifying ? '验证中...' : '🚀 一键验证'}
+            </button>
+          </div>
+        )}
+        
+        {error && (
+          <div className="poc-response poc-response--error">
+            <div className="poc-response-header">❌ 错误</div>
+            <pre className="poc-response-content">{error}</pre>
+          </div>
+        )}
+        
+        {response && (
+          <div className="poc-response poc-response--success">
+            <div className="poc-response-header">✅ 响应结果</div>
+            <pre className="poc-response-content">{response}</pre>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -84,21 +84,21 @@ export const api = {
   },
 
   createCategory(name: string): Promise<VulnerabilityCategory> {
-    return request<VulnerabilityCategory>('/categories', {
+    return request<VulnerabilityCategory>('/edit/categories', {
       method: 'POST',
       body: JSON.stringify({ name }),
     });
   },
 
   updateCategory(categoryId: string, name: string): Promise<VulnerabilityCategory> {
-    return request<VulnerabilityCategory>(`/categories/${encodeURIComponent(categoryId)}`, {
+    return request<VulnerabilityCategory>(`/edit/categories/${encodeURIComponent(categoryId)}`, {
       method: 'PUT',
       body: JSON.stringify({ name }),
     });
   },
 
   deleteCategory(categoryId: string): Promise<void> {
-    return request<void>(`/categories/${encodeURIComponent(categoryId)}`, {
+    return request<void>(`/edit/categories/${encodeURIComponent(categoryId)}`, {
       method: 'DELETE',
     });
   },
@@ -107,7 +107,7 @@ export const api = {
     categoryId: string,
     item: VulnerabilityItem
   ): Promise<VulnerabilityItem> {
-    return request<VulnerabilityItem>(`/categories/${encodeURIComponent(categoryId)}/items`, {
+    return request<VulnerabilityItem>(`/edit/categories/${encodeURIComponent(categoryId)}/items`, {
       method: 'POST',
       body: JSON.stringify(item),
     });
@@ -118,14 +118,14 @@ export const api = {
     itemId: string,
     item: VulnerabilityItem
   ): Promise<VulnerabilityItem> {
-    return request<VulnerabilityItem>(`/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
+    return request<VulnerabilityItem>(`/edit/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
       method: 'PUT',
       body: JSON.stringify(item),
     });
   },
 
   deleteItem(categoryId: string, itemId: string): Promise<void> {
-    return request<void>(`/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
+    return request<void>(`/edit/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
       method: 'DELETE',
     });
   },
@@ -143,7 +143,7 @@ export const api = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const res = await fetch(`${API_BASE}/import/yaml`, {
+    const res = await fetch(`${API_BASE}/edit/import/yaml`, {
       method: 'POST',
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       body: formData,
