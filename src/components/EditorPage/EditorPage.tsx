@@ -161,21 +161,6 @@ export function EditorPage({ onBack }: EditorPageProps) {
     }
   };
 
-  const handleExportMarkdown = async () => {
-    try {
-      const content = await api.exportMarkdown();
-      const blob = new Blob([content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'vulnerabilities.md';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '导出失败');
-    }
-  };
-
   const handleImportYaml = async () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -240,9 +225,6 @@ export function EditorPage({ onBack }: EditorPageProps) {
         </button>
         <h1 className="editor-title">文档编辑器</h1>
         <div className="editor-toolbar-actions">
-          <button className="editor-toolbar-btn" onClick={handleExportMarkdown} title="导出 Markdown">
-            📄 Markdown
-          </button>
           <button className="editor-toolbar-btn" onClick={handleExportYaml} title="导出 YAML">
             📄 YAML
           </button>

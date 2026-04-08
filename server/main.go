@@ -81,7 +81,6 @@ func main() {
 	api.GET("/auth/check", HandleAuthCheck())
 	api.GET("/data", HandleGetData(store))
 	api.GET("/export/yaml", HandleExportYAML(store))
-	api.GET("/export/markdown", HandleExportMarkdown(store))
 
 	admin := api.Group("")
 	admin.Use(AuthMiddleware)

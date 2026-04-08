@@ -154,12 +154,4 @@ export const api = {
       throw new Error(error.error || 'Import failed');
     }
   },
-
-  async exportMarkdown(): Promise<string> {
-    const res = await fetch(`${API_BASE}/export/markdown`);
-    if (!res.ok) {
-      throw new Error(`Export failed: ${res.status}`);
-    }
-    return res.text();
-  },
 };

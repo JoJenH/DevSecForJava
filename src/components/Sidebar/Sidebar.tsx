@@ -45,21 +45,6 @@ export function Sidebar({
     }
   };
 
-  const handleExportMarkdown = async () => {
-    try {
-      const content = await api.exportMarkdown();
-      const blob = new Blob([content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'vulnerabilities.md';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('导出失败:', err);
-    }
-  };
-
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -98,9 +83,6 @@ export function Sidebar({
       <div className="sidebar-footer">
         <button className="sidebar-export-btn" onClick={handleExportYaml}>
           导出 YAML
-        </button>
-        <button className="sidebar-export-btn" onClick={handleExportMarkdown}>
-          导出 MD
         </button>
       </div>
     </aside>

@@ -138,16 +138,6 @@ func HandleExportYAML(store *Store) echo.HandlerFunc {
 	}
 }
 
-func HandleExportMarkdown(store *Store) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		data := store.GetAll()
-		markdown := ExportToMarkdown(data)
-		c.Response().Header().Set("Content-Type", "text/markdown; charset=utf-8")
-		c.Response().Header().Set("Content-Disposition", "attachment; filename=vulnerabilities.md")
-		return c.String(http.StatusOK, markdown)
-	}
-}
-
 func HandleImportYAML(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		file, err := c.FormFile("file")

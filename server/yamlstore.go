@@ -1,12 +1,19 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
+
+func generateID(name string) string {
+	h := sha256.Sum256([]byte(name))
+	return hex.EncodeToString(h[:8])
+}
 
 func LoadFromYAML(path string) (VulnerabilityData, error) {
 	data, err := os.ReadFile(path)
