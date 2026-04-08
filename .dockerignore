@@ -1,0 +1,17 @@
+.git
+.gitignore
+node_modules
+dist
+target
+*.class
+*.log
+*.tmp
+.DS_Store
+*.md
+.vscode
+.idea
+*.iml
+docker-compose.yml
+Dockerfile*
+!.dockerignore
+dev.sh
