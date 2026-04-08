@@ -170,3 +170,28 @@
   border-radius: 8px;
   margin: 12px 0;
 }
+
+.code-block-wrapper {
+  position: relative;
+}
+
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.code-copy-btn:hover {
+  background: var(--bg4);
+  color: var(--text);
+  border-color: var(--accent);
+}
