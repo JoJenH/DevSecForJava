@@ -1,29 +1,39 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar/Sidebar';
 import { CategoryContent } from './components/Content/CategoryContent';
 import { EditorPage } from './components/EditorPage/EditorPage';
 import { LoginPage } from './components/LoginPage/LoginPage';
-import { useVulnerabilities } from './hooks/useVulnerabilities';
+import { useCategories, useCategory } from './hooks/useVulnerabilities';
 import { useTheme } from './hooks/useTheme';
 import { auth } from './services/api';
-import type { VulnerabilityCategory } from './types';
 import './App.css';
 
 function CategoryPage({
-  categories,
   selectedItemId,
   onScrollItem
 }: {
-  categories: VulnerabilityCategory[];
   selectedItemId: string | null;
   onScrollItem: (itemId: string) => void;
 }) {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const category = categories.find((c: VulnerabilityCategory) => c.id === categoryId);
+  const categoryName = categoryId ? decodeURIComponent(categoryId) : null;
+  const { category, loading, error } = useCategory(categoryName);
 
-  if (!category) {
-    return <Navigate to={`/${categories[0]?.id}`} replace />;
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="loading-spinner">加载中...</div>
+      </div>
+    );
+  }
+
+  if (error || !category) {
+    return (
+      <div className="error">
+        <div className="error-message">{error || '加载失败'}</div>
+      </div>
+    );
   }
 
   return (
@@ -62,33 +72,33 @@ function EditGuard({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { data, loading, error } = useVulnerabilities();
+  const { categories, loading: categoriesLoading, error: categoriesError, refresh } = useCategories();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const initialExpandedCategories = useMemo(() => {
-    return data ? new Set(data.categories.map(cat => cat.id)) : new Set<string>();
-  }, [data]);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(initialExpandedCategories);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const isEditMode = location.pathname === '/edit';
 
-  const handleSelectItem = useCallback((itemId: string, categoryId: string) => {
+  const { categoryId } = useParams<{ categoryId: string }>();
+  const currentCategoryName = categoryId ? decodeURIComponent(categoryId) : null;
+  const { category: currentCategory, loading: categoryLoading } = useCategory(currentCategoryName || null);
+
+  const handleSelectItem = useCallback((itemId: string) => {
     setSelectedItemId(itemId);
-    navigate(`/${categoryId}`);
-  }, [navigate]);
+  }, []);
 
   const handleScrollItem = useCallback((itemId: string) => {
     setSelectedItemId(itemId);
   }, []);
 
-  const handleToggleCategory = useCallback((categoryId: string) => {
+  const handleToggleCategory = useCallback((categoryName: string) => {
     setExpandedCategories(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
+      if (newSet.has(categoryName)) {
+        newSet.delete(categoryName);
       } else {
-        newSet.add(categoryId);
+        newSet.add(categoryName);
       }
       return newSet;
     });
@@ -97,12 +107,17 @@ function AppContent() {
   if (isEditMode) {
     return (
       <EditGuard>
-        <EditorPage onBack={() => navigate('/')} />
+        <EditorPage
+          categoryName={currentCategoryName || undefined}
+          categories={categories}
+          onBack={() => navigate('/')}
+          onSave={refresh}
+        />
       </EditGuard>
     );
   }
 
-  if (loading) {
+  if (categoriesLoading) {
     return (
       <div className="loading">
         <div className="loading-spinner">加载中...</div>
@@ -110,16 +125,16 @@ function AppContent() {
     );
   }
 
-  if (error) {
+  if (categoriesError) {
     return (
       <div className="error">
         <div className="error-title">加载失败</div>
-        <div className="error-message">{error}</div>
+        <div className="error-message">{categoriesError}</div>
       </div>
     );
   }
 
-  if (!data || data.categories.length === 0) {
+  if (categories.length === 0) {
     return (
       <div className="error">
         <div className="error-message">暂无数据</div>
@@ -127,14 +142,17 @@ function AppContent() {
     );
   }
 
+  const defaultCategory = categories[0]?.name;
+
   return (
     <div className="app">
       <Sidebar
-        categories={data.categories}
+        categories={categories}
         selectedItemId={selectedItemId}
         onSelectItem={handleSelectItem}
         expandedCategories={expandedCategories}
         onToggleCategory={handleToggleCategory}
+        currentCategoryItems={!categoryLoading && currentCategory ? currentCategory.items : undefined}
       />
       <div className="theme-toggle">
         <button onClick={toggleTheme} className="theme-toggle-button">
@@ -146,7 +164,6 @@ function AppContent() {
           path="/:categoryId"
           element={
             <CategoryPage
-              categories={data.categories}
               selectedItemId={selectedItemId}
               onScrollItem={handleScrollItem}
             />
@@ -154,7 +171,7 @@ function AppContent() {
         />
         <Route
           path="/"
-          element={<Navigate to={`/${data.categories[0].id}`} replace />}
+          element={<Navigate to={`/${encodeURIComponent(defaultCategory)}`} replace />}
         />
       </Routes>
     </div>

@@ -39,133 +39,65 @@ func HandleAuthCheck() echo.HandlerFunc {
 	}
 }
 
-func HandleGetData(store *Store) echo.HandlerFunc {
+func HandleListCategories(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.JSON(http.StatusOK, store.GetAll())
+		categories, err := store.ListCategories()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusOK, categories)
+	}
+}
+
+func HandleGetCategory(store *Store) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		name := c.Param("name")
+		category, err := store.GetCategory(name)
+		if err != nil {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusOK, category)
 	}
 }
 
 func HandleCreateCategory(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var req CategoryCreateRequest
+		var req struct {
+			Name string `json:"name"`
+		}
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
 		if req.Name == "" {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "name is required"})
 		}
-		cat, err := store.CreateCategory(req)
-		if err != nil {
+		if err := store.CreateCategory(req.Name); err != nil {
 			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
 		}
-		return c.JSON(http.StatusCreated, cat)
+		return c.JSON(http.StatusCreated, CategoryInfo{Name: req.Name})
 	}
 }
 
 func HandleUpdateCategory(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		name := c.Param("name")
 		var req CategoryUpdateRequest
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
-		cat, err := store.UpdateCategory(c.Param("categoryId"), req)
-		if err != nil {
+		if err := store.UpdateCategory(name, req); err != nil {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}
-		return c.JSON(http.StatusOK, cat)
+		return c.JSON(http.StatusOK, CategoryContent{Name: name, Content: req.Content})
 	}
 }
 
 func HandleDeleteCategory(store *Store) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		if err := store.DeleteCategory(c.Param("categoryId")); err != nil {
+		name := c.Param("name")
+		if err := store.DeleteCategory(name); err != nil {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}
 		return c.NoContent(http.StatusNoContent)
-	}
-}
-
-func HandleCreateItem(store *Store) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var req ItemCreateRequest
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		}
-		if req.Name == "" {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "name is required"})
-		}
-		item, err := store.CreateItem(c.Param("categoryId"), req)
-		if err != nil {
-			return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
-		}
-		return c.JSON(http.StatusCreated, item)
-	}
-}
-
-func HandleUpdateItem(store *Store) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		var req ItemUpdateRequest
-		if err := c.Bind(&req); err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		}
-		item, err := store.UpdateItem(c.Param("categoryId"), c.Param("itemId"), req)
-		if err != nil {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
-		}
-		return c.JSON(http.StatusOK, item)
-	}
-}
-
-func HandleDeleteItem(store *Store) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if err := store.DeleteItem(c.Param("categoryId"), c.Param("itemId")); err != nil {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
-		}
-		return c.NoContent(http.StatusNoContent)
-	}
-}
-
-func HandleExportYAML(store *Store) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		data := store.GetAll()
-		yamlData, err := SaveToYAMLString(data)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-		c.Response().Header().Set("Content-Type", "text/yaml; charset=utf-8")
-		c.Response().Header().Set("Content-Disposition", "attachment; filename=vulnerabilities.yaml")
-		return c.String(http.StatusOK, yamlData)
-	}
-}
-
-func HandleImportYAML(store *Store) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		file, err := c.FormFile("file")
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "file is required"})
-		}
-
-		src, err := file.Open()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to open file"})
-		}
-		defer src.Close()
-
-		buf := make([]byte, file.Size)
-		_, err = src.Read(buf)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
-		}
-
-		data, err := LoadFromYAMLString(string(buf))
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
-		}
-
-		if err := store.ReplaceData(data); err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		}
-
-		return c.JSON(http.StatusOK, map[string]string{"message": "import successful"})
 	}
 }

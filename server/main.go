@@ -64,7 +64,7 @@ func main() {
 
 	dataPath := os.Getenv("DATA_PATH")
 	if dataPath == "" {
-		dataPath = filepath.Join(execDir, "data", "vulnerabilities.yaml")
+		dataPath = filepath.Join(execDir, "data")
 	}
 
 	distPath := os.Getenv("DIST_PATH")
@@ -94,19 +94,16 @@ func main() {
 
 	api.POST("/auth/login", HandleLogin(editToken))
 	api.GET("/auth/check", HandleAuthCheck())
-	api.GET("/data", HandleGetData(store))
-	api.GET("/export/yaml", HandleExportYAML(store))
+
+	api.GET("/categories", HandleListCategories(store))
+	api.GET("/categories/:name", HandleGetCategory(store))
 
 	edit := api.Group("/edit")
 	edit.Use(AuthMiddleware)
 
 	edit.POST("/categories", HandleCreateCategory(store))
-	edit.PUT("/categories/:categoryId", HandleUpdateCategory(store))
-	edit.DELETE("/categories/:categoryId", HandleDeleteCategory(store))
-	edit.POST("/categories/:categoryId/items", HandleCreateItem(store))
-	edit.PUT("/categories/:categoryId/items/:itemId", HandleUpdateItem(store))
-	edit.DELETE("/categories/:categoryId/items/:itemId", HandleDeleteItem(store))
-	edit.POST("/import/yaml", HandleImportYAML(store))
+	edit.PUT("/categories/:name", HandleUpdateCategory(store))
+	edit.DELETE("/categories/:name", HandleDeleteCategory(store))
 
 	vulProxy := createProxy(javaAddr)
 	e.Any("/vul/*", echo.WrapHandler(vulProxy))

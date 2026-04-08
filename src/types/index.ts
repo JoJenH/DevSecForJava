@@ -1,5 +1,4 @@
 export interface VulnerabilityItem {
-  id?: string;
   name: string;
   description: string;
   vulnerableCode: string;
@@ -12,11 +11,19 @@ export interface VulnerabilityItem {
 }
 
 export interface VulnerabilityCategory {
-  id: string;
   name: string;
   items: VulnerabilityItem[];
 }
 
 export interface VulnerabilityData {
   categories: VulnerabilityCategory[];
+}
+
+export interface CategoryInfo {
+  name: string;
+}
+
+export interface CategoryContent {
+  name: string;
+  content: string;
 }

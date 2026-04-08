@@ -1,4 +1,4 @@
-import type { VulnerabilityData, VulnerabilityCategory, VulnerabilityItem } from '../types';
+import type { CategoryInfo, CategoryContent } from '../types';
 
 const API_BASE = '/api';
 const TOKEN_KEY = 'access_token';
@@ -79,79 +79,31 @@ export const auth = {
 };
 
 export const api = {
-  getData(): Promise<VulnerabilityData> {
-    return request<VulnerabilityData>('/data');
+  getCategories(): Promise<CategoryInfo[]> {
+    return request<CategoryInfo[]>('/categories');
   },
 
-  createCategory(name: string): Promise<VulnerabilityCategory> {
-    return request<VulnerabilityCategory>('/edit/categories', {
+  getCategory(name: string): Promise<CategoryContent> {
+    return request<CategoryContent>(`/categories/${encodeURIComponent(name)}`);
+  },
+
+  createCategory(name: string): Promise<CategoryInfo> {
+    return request<CategoryInfo>('/edit/categories', {
       method: 'POST',
       body: JSON.stringify({ name }),
     });
   },
 
-  updateCategory(categoryId: string, name: string): Promise<VulnerabilityCategory> {
-    return request<VulnerabilityCategory>(`/edit/categories/${encodeURIComponent(categoryId)}`, {
+  updateCategory(name: string, content: string): Promise<CategoryContent> {
+    return request<CategoryContent>(`/edit/categories/${encodeURIComponent(name)}`, {
       method: 'PUT',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ content }),
     });
   },
 
-  deleteCategory(categoryId: string): Promise<void> {
-    return request<void>(`/edit/categories/${encodeURIComponent(categoryId)}`, {
+  deleteCategory(name: string): Promise<void> {
+    return request<void>(`/edit/categories/${encodeURIComponent(name)}`, {
       method: 'DELETE',
     });
-  },
-
-  createItem(
-    categoryId: string,
-    item: VulnerabilityItem
-  ): Promise<VulnerabilityItem> {
-    return request<VulnerabilityItem>(`/edit/categories/${encodeURIComponent(categoryId)}/items`, {
-      method: 'POST',
-      body: JSON.stringify(item),
-    });
-  },
-
-  updateItem(
-    categoryId: string,
-    itemId: string,
-    item: VulnerabilityItem
-  ): Promise<VulnerabilityItem> {
-    return request<VulnerabilityItem>(`/edit/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
-      method: 'PUT',
-      body: JSON.stringify(item),
-    });
-  },
-
-  deleteItem(categoryId: string, itemId: string): Promise<void> {
-    return request<void>(`/edit/categories/${encodeURIComponent(categoryId)}/items/${encodeURIComponent(itemId)}`, {
-      method: 'DELETE',
-    });
-  },
-
-  async exportYaml(): Promise<string> {
-    const res = await fetch(`${API_BASE}/export/yaml`);
-    if (!res.ok) {
-      throw new Error(`Export failed: ${res.status}`);
-    }
-    return res.text();
-  },
-
-  async importYaml(file: File): Promise<void> {
-    const token = getToken();
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const res = await fetch(`${API_BASE}/edit/import/yaml`, {
-      method: 'POST',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const error = await res.json().catch(() => ({ error: 'Import failed' }));
-      throw new Error(error.error || 'Import failed');
-    }
   },
 };

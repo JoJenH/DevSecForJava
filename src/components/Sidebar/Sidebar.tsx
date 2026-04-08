@@ -1,14 +1,14 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import type { VulnerabilityCategory } from '../../types';
-import { api } from '../../services/api';
+import type { CategoryInfo, VulnerabilityItem } from '../../types';
 import './Sidebar.css';
 
 interface SidebarProps {
-  categories: VulnerabilityCategory[];
+  categories: CategoryInfo[];
   selectedItemId: string | null;
-  onSelectItem: (itemId: string, categoryId: string) => void;
+  onSelectItem: (itemId: string) => void;
   expandedCategories: Set<string>;
   onToggleCategory: (categoryId: string) => void;
+  currentCategoryItems?: VulnerabilityItem[];
 }
 
 export function Sidebar({
@@ -16,33 +16,20 @@ export function Sidebar({
   selectedItemId,
   onSelectItem,
   expandedCategories,
-  onToggleCategory
+  onToggleCategory,
+  currentCategoryItems,
 }: SidebarProps) {
   const navigate = useNavigate();
-  const { categoryId: currentCategoryId } = useParams<{ categoryId: string }>();
+  const { categoryId: encodedCategoryId } = useParams<{ categoryId: string }>();
+  const currentCategoryId = encodedCategoryId ? decodeURIComponent(encodedCategoryId) : null;
 
-  const handleCategoryClick = (categoryId: string) => {
-    navigate(`/${categoryId}`);
-    onToggleCategory(categoryId);
+  const handleCategoryClick = (categoryName: string) => {
+    navigate(`/${encodeURIComponent(categoryName)}`);
+    onToggleCategory(categoryName);
   };
 
-  const handleItemClick = (itemId: string, categoryId: string) => {
-    onSelectItem(itemId, categoryId);
-  };
-
-  const handleExportYaml = async () => {
-    try {
-      const content = await api.exportYaml();
-      const blob = new Blob([content], { type: 'text/yaml' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'vulnerabilities.yaml';
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('导出失败:', err);
-    }
+  const handleItemClick = (itemName: string) => {
+    onSelectItem(itemName);
   };
 
   return (
@@ -53,23 +40,23 @@ export function Sidebar({
       </div>
       <nav className="sidebar-nav">
         {categories.map(category => (
-          <div key={category.id} className="category">
+          <div key={category.name} className="category">
             <button
-              className={`category-header ${expandedCategories.has(category.id) ? 'expanded' : ''} ${currentCategoryId === category.id ? 'active' : ''}`}
-              onClick={() => handleCategoryClick(category.id)}
+              className={`category-header ${expandedCategories.has(category.name) ? 'expanded' : ''} ${currentCategoryId === category.name ? 'active' : ''}`}
+              onClick={() => handleCategoryClick(category.name)}
             >
               <span className="category-icon">
-                {expandedCategories.has(category.id) ? '▼' : '▶'}
+                {expandedCategories.has(category.name) ? '▼' : '▶'}
               </span>
               <span className="category-name">{category.name}</span>
             </button>
-            {expandedCategories.has(category.id) && (
+            {expandedCategories.has(category.name) && currentCategoryItems && (
               <ul className="category-items">
-                {category.items.map(item => (
-                  <li key={item.id}>
+                {currentCategoryItems.map((item, index) => (
+                  <li key={index}>
                     <button
-                      className={`item-button ${selectedItemId === item.id ? 'active' : ''}`}
-                      onClick={() => handleItemClick(item.id!, category.id)}
+                      className={`item-button ${selectedItemId === item.name ? 'active' : ''}`}
+                      onClick={() => handleItemClick(item.name)}
                     >
                       {item.name}
                     </button>
@@ -80,11 +67,6 @@ export function Sidebar({
           </div>
         ))}
       </nav>
-      <div className="sidebar-footer">
-        <button className="sidebar-export-btn" onClick={handleExportYaml}>
-          导出 YAML
-        </button>
-      </div>
     </aside>
   );
 }

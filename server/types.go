@@ -1,58 +1,16 @@
 package main
 
-type VulnerabilityItem struct {
-	ID             string   `json:"id"`
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	VulnerableCode string   `json:"vulnerableCode"`
-	FixedCode      string   `json:"fixedCode"`
-	AuditPoints    []string `json:"auditPoints"`
-	FixPoints      []string `json:"fixPoints"`
-	POC            string   `json:"poc"`
-	VerifyUrl      string   `json:"verifyUrl,omitempty"`
-	Payload        string   `json:"payload,omitempty"`
-}
-
-type VulnerabilityCategory struct {
-	ID    string              `json:"id"`
-	Name  string              `json:"name"`
-	Items []VulnerabilityItem `json:"items"`
-}
-
-type VulnerabilityData struct {
-	Categories []VulnerabilityCategory `json:"categories"`
-}
-
-type ItemUpdateRequest struct {
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	VulnerableCode string   `json:"vulnerableCode"`
-	FixedCode      string   `json:"fixedCode"`
-	AuditPoints    []string `json:"auditPoints"`
-	FixPoints      []string `json:"fixPoints"`
-	POC            string   `json:"poc"`
-	VerifyUrl      string   `json:"verifyUrl,omitempty"`
-	Payload        string   `json:"payload,omitempty"`
-}
-
-type CategoryCreateRequest struct {
+type CategoryInfo struct {
 	Name string `json:"name"`
+}
+
+type CategoryContent struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
 type CategoryUpdateRequest struct {
-	Name string `json:"name"`
-}
-
-type ItemCreateRequest struct {
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	VulnerableCode string   `json:"vulnerableCode"`
-	FixedCode      string   `json:"fixedCode"`
-	AuditPoints    []string `json:"auditPoints"`
-	FixPoints      []string `json:"fixPoints"`
-	POC            string   `json:"poc"`
-	VerifyUrl      string   `json:"verifyUrl,omitempty"`
-	Payload        string   `json:"payload,omitempty"`
+	Content string `json:"content"`
 }
 
 type LoginRequest struct {

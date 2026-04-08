@@ -2,199 +2,141 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 type Store struct {
 	mu   sync.RWMutex
-	data VulnerabilityData
 	path string
 }
 
 func NewStore(dataPath string) (*Store, error) {
 	s := &Store{path: dataPath}
-	if err := s.load(); err != nil {
+	if err := s.ensureDir(); err != nil {
 		return nil, err
 	}
 	return s, nil
 }
 
-func (s *Store) load() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
+func (s *Store) ensureDir() error {
 	absPath, err := filepath.Abs(s.path)
 	if err != nil {
 		return err
 	}
-
-	parsed, err := LoadFromYAML(absPath)
-	if err != nil {
-		return err
-	}
-	s.data = parsed
-	return nil
+	return os.MkdirAll(absPath, 0755)
 }
 
-func (s *Store) saveLocked() error {
-	absPath, err := filepath.Abs(s.path)
-	if err != nil {
-		return err
-	}
-
-	return SaveToYAML(absPath, s.data)
-}
-
-func (s *Store) GetAll() VulnerabilityData {
+func (s *Store) ListCategories() ([]CategoryInfo, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.data
-}
 
-func (s *Store) CreateCategory(req CategoryCreateRequest) (*VulnerabilityCategory, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	id := generateID(req.Name)
-	for _, cat := range s.data.Categories {
-		if cat.ID == id {
-			return nil, fmt.Errorf("category already exists")
-		}
-	}
-
-	newCat := VulnerabilityCategory{
-		ID:    id,
-		Name:  req.Name,
-		Items: []VulnerabilityItem{},
-	}
-	s.data.Categories = append(s.data.Categories, newCat)
-
-	if err := s.saveLocked(); err != nil {
+	absPath, err := filepath.Abs(s.path)
+	if err != nil {
 		return nil, err
 	}
-	return &newCat, nil
-}
 
-func (s *Store) UpdateCategory(categoryID string, req CategoryUpdateRequest) (*VulnerabilityCategory, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for i := range s.data.Categories {
-		if s.data.Categories[i].ID == categoryID {
-			s.data.Categories[i].Name = req.Name
-			cat := s.data.Categories[i]
-			if err := s.saveLocked(); err != nil {
-				return nil, err
-			}
-			return &cat, nil
-		}
+	entries, err := os.ReadDir(absPath)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("category not found")
-}
 
-func (s *Store) DeleteCategory(categoryID string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for i, cat := range s.data.Categories {
-		if cat.ID == categoryID {
-			s.data.Categories = append(s.data.Categories[:i], s.data.Categories[i+1:]...)
-			return s.saveLocked()
+	var categories []CategoryInfo
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
 		}
-	}
-	return fmt.Errorf("category not found")
-}
-
-func (s *Store) CreateItem(categoryID string, req ItemCreateRequest) (*VulnerabilityItem, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for i := range s.data.Categories {
-		if s.data.Categories[i].ID == categoryID {
-			id := generateID(req.Name)
-
-			for _, item := range s.data.Categories[i].Items {
-				if item.ID == id {
-					return nil, fmt.Errorf("item already exists")
-				}
-			}
-			newItem := VulnerabilityItem{
-				ID:             id,
-				Name:           req.Name,
-				Description:    req.Description,
-				VulnerableCode: req.VulnerableCode,
-				FixedCode:      req.FixedCode,
-				AuditPoints:    req.AuditPoints,
-				FixPoints:      req.FixPoints,
-				POC:            req.POC,
-				VerifyUrl:      req.VerifyUrl,
-				Payload:        req.Payload,
-			}
-			s.data.Categories[i].Items = append(s.data.Categories[i].Items, newItem)
-			if err := s.saveLocked(); err != nil {
-				return nil, err
-			}
-			return &newItem, nil
+		if filepath.Ext(entry.Name()) != ".md" {
+			continue
 		}
+		name := strings.TrimSuffix(entry.Name(), ".md")
+		categories = append(categories, CategoryInfo{Name: name})
 	}
-	return nil, fmt.Errorf("category not found")
+	return categories, nil
 }
 
-func (s *Store) UpdateItem(categoryID, itemID string, req ItemUpdateRequest) (*VulnerabilityItem, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *Store) GetCategory(name string) (*CategoryContent, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	for i := range s.data.Categories {
+	absPath, err := filepath.Abs(s.path)
+	if err != nil {
+		return nil, err
+	}
 
-		if s.data.Categories[i].ID == categoryID {
-			for j := range s.data.Categories[i].Items {
-				if s.data.Categories[i].Items[j].ID == itemID {
-					item := &s.data.Categories[i].Items[j]
-					item.Name = req.Name
-					item.Description = req.Description
-					item.VulnerableCode = req.VulnerableCode
-					item.FixedCode = req.FixedCode
-					item.AuditPoints = req.AuditPoints
-					item.FixPoints = req.FixPoints
-					item.POC = req.POC
-					item.VerifyUrl = req.VerifyUrl
-					item.Payload = req.Payload
-					if err := s.saveLocked(); err != nil {
-						return nil, err
-					}
-					return item, nil
-				}
-			}
-			return nil, fmt.Errorf("item not found")
+	filename := name + ".md"
+	filePath := filepath.Join(absPath, filename)
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("category not found")
 		}
+		return nil, err
 	}
-	return nil, fmt.Errorf("category not found")
+
+	return &CategoryContent{
+		Name:    name,
+		Content: string(content),
+	}, nil
 }
 
-func (s *Store) DeleteItem(categoryID, itemID string) error {
+func (s *Store) CreateCategory(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	for i := range s.data.Categories {
-		if s.data.Categories[i].ID == categoryID {
-			items := s.data.Categories[i].Items
-			for j, item := range items {
-				if item.ID == itemID {
-					s.data.Categories[i].Items = append(items[:j], items[j+1:]...)
-					return s.saveLocked()
-				}
-			}
-			return fmt.Errorf("item not found")
-		}
+	absPath, err := filepath.Abs(s.path)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("category not found")
+
+	filename := name + ".md"
+	filePath := filepath.Join(absPath, filename)
+
+	if _, err := os.Stat(filePath); err == nil {
+		return fmt.Errorf("category already exists")
+	}
+
+	defaultContent := "# " + name + "\n\n"
+	return os.WriteFile(filePath, []byte(defaultContent), 0644)
 }
 
-func (s *Store) ReplaceData(data VulnerabilityData) error {
+func (s *Store) UpdateCategory(name string, req CategoryUpdateRequest) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.data = data
-	return s.saveLocked()
+	absPath, err := filepath.Abs(s.path)
+	if err != nil {
+		return err
+	}
+
+	filename := name + ".md"
+	filePath := filepath.Join(absPath, filename)
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("category not found")
+	}
+
+	return os.WriteFile(filePath, []byte(req.Content), 0644)
+}
+
+func (s *Store) DeleteCategory(name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	absPath, err := filepath.Abs(s.path)
+	if err != nil {
+		return err
+	}
+
+	filename := name + ".md"
+	filePath := filepath.Join(absPath, filename)
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("category not found")
+	}
+
+	return os.Remove(filePath)
 }

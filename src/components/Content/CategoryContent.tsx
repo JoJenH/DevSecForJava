@@ -20,7 +20,7 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
   const lastScrolledItemId = useRef<string | null>(null);
 
   const displayedItem = selectedItemId
-    ? category.items.find(i => i.id === selectedItemId) || category.items[0]
+    ? category.items.find(i => i.name === selectedItemId) || category.items[0]
     : category.items[0];
 
   useEffect(() => {
@@ -33,21 +33,21 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
       const containerRect = contentEl.getBoundingClientRect();
       const detectionLine = containerRect.top + STICKY_HEADER_HEIGHT + 20;
 
-      let currentItemId: string | null = null;
+      let currentItemName: string | null = null;
       let maxTop = -Infinity;
 
-      for (const [id, element] of itemRefs.current.entries()) {
+      for (const [name, element] of itemRefs.current.entries()) {
         const elementTop = element.getBoundingClientRect().top;
 
         if (elementTop <= detectionLine && elementTop > maxTop) {
           maxTop = elementTop;
-          currentItemId = id;
+          currentItemName = name;
         }
       }
 
-      if (currentItemId && currentItemId !== lastScrolledItemId.current) {
-        lastScrolledItemId.current = currentItemId;
-        onScrollItem(currentItemId);
+      if (currentItemName && currentItemName !== lastScrolledItemId.current) {
+        lastScrolledItemId.current = currentItemName;
+        onScrollItem(currentItemName);
       }
     };
 
@@ -57,7 +57,7 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
 
   useEffect(() => {
     lastScrolledItemId.current = null;
-  }, [category.id]);
+  }, [category.name]);
 
   useEffect(() => {
     if (!selectedItemId) return;
@@ -87,9 +87,9 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
     return () => clearTimeout(timeoutId);
   }, [selectedItemId]);
 
-  const setItemRef = (id: string) => (el: HTMLElement | null) => {
+  const setItemRef = (name: string) => (el: HTMLElement | null) => {
     if (el) {
-      itemRefs.current.set(id, el);
+      itemRefs.current.set(name, el);
     }
   };
 
@@ -106,10 +106,10 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
       <div className="content-body">
         {category.items.map((item, index) => (
           <article
-            key={item.id}
-            ref={setItemRef(item.id!)}
-            className={`vulnerability-item ${selectedItemId === item.id ? 'is-active' : ''}`}
-            data-item-id={item.id}
+            key={item.name}
+            ref={setItemRef(item.name)}
+            className={`vulnerability-item ${selectedItemId === item.name ? 'is-active' : ''}`}
+            data-item-id={item.name}
           >
             <div className="item-header">
               <span className="item-number">{String(index + 1).padStart(2, '0')}</span>

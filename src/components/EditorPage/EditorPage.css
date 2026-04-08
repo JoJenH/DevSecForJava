@@ -504,3 +504,75 @@
   background: var(--bg4);
   color: var(--red);
 }
+
+.markdown-editor-container {
+  display: flex;
+  gap: 24px;
+  height: 100%;
+}
+
+.markdown-editor {
+  flex: 1;
+  width: 100%;
+  min-height: 400px;
+  padding: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--mono, 'SF Mono', Menlo, Monaco, 'Courier New', monospace);
+  font-size: 14px;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.markdown-editor:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.markdown-editor::placeholder {
+  color: var(--text3);
+}
+
+.markdown-editor-help {
+  width: 280px;
+  padding: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.markdown-editor-help h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--sans);
+}
+
+.markdown-editor-help ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.markdown-editor-help li {
+  margin: 6px 0;
+  font-size: 13px;
+  color: var(--text2);
+  font-family: var(--sans);
+  line-height: 1.5;
+}
+
+.markdown-editor-help code {
+  padding: 2px 6px;
+  background: var(--bg3);
+  border-radius: 4px;
+  font-family: var(--mono, 'SF Mono', Menlo, Monaco, 'Courier New', monospace);
+  font-size: 12px;
+  color: var(--accent2);
+}
