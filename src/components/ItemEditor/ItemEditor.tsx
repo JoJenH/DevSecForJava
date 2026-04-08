@@ -259,7 +259,7 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
         <div className="editor-section">
           <div className="editor-section-header">
             <span className="editor-section-icon">⚡</span>
-            <h3 className="editor-section-title">POC (概念验证)</h3>
+            <h3 className="editor-section-title">利用方式</h3>
           </div>
           <Editor
             height="300px"
@@ -285,15 +285,14 @@ export function ItemEditor({ item, categoryId, onSave, saving }: ItemEditorProps
             <span className="editor-section-icon">🔗</span>
             <h3 className="editor-section-title">验证接口</h3>
           </div>
+          <label className="editor-label">POST 接口地址</label>
           <input
             type="text"
             className="editor-input"
             value={form.verifyUrl}
             onChange={e => updateField('verifyUrl', e.target.value)}
-            placeholder="输入 POST 接口地址，如 https://example.com/api/test"
+            placeholder="POST 接口地址"
           />
-          <p className="editor-hint">POC 内容将作为 payload 参数发送 POST 请求</p>
-          
           <label className="editor-label">Payload</label>
           <textarea
             className="editor-textarea"
