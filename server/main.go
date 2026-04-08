@@ -77,6 +77,11 @@ func main() {
 		javaAddr = "http://localhost:8081"
 	}
 
+	javaFixedAddr := os.Getenv("JAVA_FIXED_SERVICE_ADDR")
+	if javaFixedAddr == "" {
+		javaFixedAddr = "http://localhost:8082"
+	}
+
 	store, err := NewStore(dataPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize store: %v\n", err)
@@ -109,6 +114,9 @@ func main() {
 	e.Any("/vul/*", echo.WrapHandler(vulProxy))
 	e.GET("/vul", echo.WrapHandler(vulProxy))
 
+	vulFixedProxy := createProxy(javaFixedAddr)
+	e.Any("/vul/*/fixed", echo.WrapHandler(vulFixedProxy))
+
 	distDir := http.Dir(distPath)
 
 	e.GET("/assets/*", echo.WrapHandler(http.StripPrefix("/", http.FileServer(distDir))))
@@ -130,5 +138,6 @@ func main() {
 	fmt.Printf("   Data: %s\n", dataPath)
 	fmt.Printf("   Dist: %s\n", distPath)
 	fmt.Printf("   Java: %s\n", javaAddr)
+	fmt.Printf("   Java Fixed: %s\n", javaFixedAddr)
 	e.Logger.Fatal(e.Start(addr))
 }
