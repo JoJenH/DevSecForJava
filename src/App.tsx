@@ -35,7 +35,7 @@ function CategoryPage({
   );
 }
 
-function AdminGuard({ children }: { children: React.ReactNode }) {
+function EditGuard({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
 
@@ -71,7 +71,7 @@ function AppContent() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdmin = location.pathname === '/admin';
+  const isEditMode = location.pathname === '/edit';
 
   const handleSelectItem = useCallback((itemId: string, categoryId: string) => {
     setSelectedItemId(itemId);
@@ -94,11 +94,11 @@ function AppContent() {
     });
   }, []);
 
-  if (isAdmin) {
+  if (isEditMode) {
     return (
-      <AdminGuard>
+      <EditGuard>
         <EditorPage onBack={() => navigate('/')} />
-      </AdminGuard>
+      </EditGuard>
     );
   }
 

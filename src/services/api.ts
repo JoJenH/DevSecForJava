@@ -1,7 +1,7 @@
 import type { VulnerabilityData, VulnerabilityCategory, VulnerabilityItem } from '../types';
 
 const API_BASE = '/api';
-const TOKEN_KEY = 'admin_token';
+const TOKEN_KEY = 'access_token';
 
 function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);

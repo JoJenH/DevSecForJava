@@ -43,13 +43,13 @@ func main() {
 		execDir = filepath.Dir(execDir)
 	}
 
-	adminPassword := os.Getenv("ADMIN_PASSWORD")
-	if adminPassword == "" {
+	editToken := os.Getenv("EDIT_TOKEN")
+	if editToken == "" {
 		b := make([]byte, 16)
 		rand.Read(b)
-		adminPassword = hex.EncodeToString(b)
-		fmt.Printf("🔑 Generated admin password: %s\n", adminPassword)
-		fmt.Println("   Set ADMIN_PASSWORD env variable to use a custom password.")
+		editToken = hex.EncodeToString(b)
+		fmt.Printf("🔑 Generated edit token: %s\n", editToken)
+		fmt.Println("   Set EDIT_TOKEN env variable to use a custom token.")
 	}
 
 	dataPath := os.Getenv("DATA_PATH")
@@ -77,21 +77,21 @@ func main() {
 
 	api := e.Group("/api")
 
-	api.POST("/auth/login", HandleLogin(adminPassword))
+	api.POST("/auth/login", HandleLogin(editToken))
 	api.GET("/auth/check", HandleAuthCheck())
 	api.GET("/data", HandleGetData(store))
 	api.GET("/export/yaml", HandleExportYAML(store))
 
-	admin := api.Group("")
-	admin.Use(AuthMiddleware)
+	edit := api.Group("/edit")
+	edit.Use(AuthMiddleware)
 
-	admin.POST("/categories", HandleCreateCategory(store))
-	admin.PUT("/categories/:categoryId", HandleUpdateCategory(store))
-	admin.DELETE("/categories/:categoryId", HandleDeleteCategory(store))
-	admin.POST("/categories/:categoryId/items", HandleCreateItem(store))
-	admin.PUT("/categories/:categoryId/items/:itemId", HandleUpdateItem(store))
-	admin.DELETE("/categories/:categoryId/items/:itemId", HandleDeleteItem(store))
-	admin.POST("/import/yaml", HandleImportYAML(store))
+	edit.POST("/categories", HandleCreateCategory(store))
+	edit.PUT("/categories/:categoryId", HandleUpdateCategory(store))
+	edit.DELETE("/categories/:categoryId", HandleDeleteCategory(store))
+	edit.POST("/categories/:categoryId/items", HandleCreateItem(store))
+	edit.PUT("/categories/:categoryId/items/:itemId", HandleUpdateItem(store))
+	edit.DELETE("/categories/:categoryId/items/:itemId", HandleDeleteItem(store))
+	edit.POST("/import/yaml", HandleImportYAML(store))
 
 	distDir := http.Dir(distPath)
 

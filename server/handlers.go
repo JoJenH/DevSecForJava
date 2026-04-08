@@ -7,14 +7,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func HandleLogin(adminPassword string) echo.HandlerFunc {
+func HandleLogin(editToken string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var req LoginRequest
 		if err := c.Bind(&req); err != nil {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 		}
-		if req.Password != adminPassword {
-			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid password"})
+		if req.Password != editToken {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid token"})
 		}
 		token, err := GenerateToken()
 		if err != nil {

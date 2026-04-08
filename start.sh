@@ -29,7 +29,7 @@ run() {
   echo ""
   echo "🚀 Starting server..."
   cd "$PROJECT_DIR"
-  export ADMIN_PASSWORD="123"
+  export EDIT_TOKEN="123"
   exec "$BINARY"
 }
 
