@@ -27,22 +27,11 @@ b
 
 ### 利用方式
 
-#### POC
-
 ```shell
 cat /etc/passwd
 ```
 
-### POC
-
-内容
-
-### 验证接口
-
-``
-
 ### payload
 
 ```
-
 ```

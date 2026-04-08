@@ -1,7 +1,7 @@
 import type { VulnerabilityCategory, VulnerabilityItem } from '../types';
 
 interface ParsedSection {
-  type: 'description' | 'vulnerableCode' | 'fixedCode' | 'auditPoints' | 'fixPoints' | 'poc' | 'verifyUrl' | 'payload' | 'unknown';
+  type: 'description' | 'vulnerableCode' | 'fixedCode' | 'auditPoints' | 'fixPoints' | 'poc' | 'payload' | 'unknown';
   content: string;
   items?: string[];
 }
@@ -87,8 +87,6 @@ export function parseMarkdown(content: string): VulnerabilityCategory {
         currentSection = { type: 'fixPoints', content: '' };
       } else if (sectionTitle === '利用方式' || sectionTitle === 'poc') {
         currentSection = { type: 'poc', content: '' };
-      } else if (sectionTitle === '验证接口') {
-        currentSection = { type: 'verifyUrl', content: '' };
       } else if (sectionTitle === 'payload') {
         currentSection = { type: 'payload', content: '' };
       } else {
@@ -116,18 +114,6 @@ export function parseMarkdown(content: string): VulnerabilityCategory {
     if (currentSection.type === 'vulnerableCode' || currentSection.type === 'fixedCode' || currentSection.type === 'payload') {
       if (trimmed !== '') {
         currentSection.content += (currentSection.content ? '\n' : '') + line;
-      }
-      continue;
-    }
-
-    if (currentSection.type === 'verifyUrl') {
-      const codeMatch = trimmed.match(/^`([^`]+)`$/);
-      if (codeMatch) {
-        currentSection.content = codeMatch[1];
-        applySectionToItem(currentItem, currentSection);
-        currentSection = { type: 'unknown', content: '' };
-      } else if (trimmed !== '') {
-        currentSection.content += (currentSection.content ? '\n' : '') + trimmed;
       }
       continue;
     }
@@ -170,9 +156,6 @@ function applySectionToItem(item: VulnerabilityItem, section: ParsedSection) {
       break;
     case 'poc':
       item.poc = section.content.trim();
-      break;
-    case 'verifyUrl':
-      item.verifyUrl = section.content.trim();
       break;
     case 'payload':
       item.payload = section.content.trim();

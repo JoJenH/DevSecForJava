@@ -186,7 +186,6 @@ export function EditorPage({ categoryName, categories, onBack, onSave }: EditorP
                   <li><code>### 审计点</code> - 审计检查点（使用有序列表）</li>
                   <li><code>### 修复点</code> - 修复建议（使用有序列表）</li>
                   <li><code>### 利用方式</code> - 利用说明</li>
-                  <li><code>### 验证接口</code> - 验证 URL（用反引号包裹）</li>
                   <li><code>### payload</code> - Payload 示例</li>
                 </ul>
               </div>

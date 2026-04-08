@@ -6,7 +6,6 @@ export interface VulnerabilityItem {
   auditPoints: string[];
   fixPoints: string[];
   poc: string;
-  verifyUrl?: string;
   payload?: string;
 }
 

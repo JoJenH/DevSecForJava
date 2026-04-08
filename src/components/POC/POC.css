@@ -310,3 +310,87 @@
   max-height: 300px;
   overflow-y: auto;
 }
+
+.poc-compare {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.poc-compare-card {
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.poc-compare-card--vulnerable {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.poc-compare-card--safe {
+  background: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.poc-compare-header {
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.poc-compare-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.poc-compare-badge--vulnerable {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.poc-compare-badge--fixed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.poc-compare-status {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.poc-compare-status--danger {
+  color: #ef4444;
+}
+
+.poc-compare-status--success {
+  color: #22c55e;
+}
+
+.poc-compare-status--warning {
+  color: #f59e0b;
+}
+
+.poc-compare-message {
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.poc-compare-result {
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  font-size: 11px;
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
