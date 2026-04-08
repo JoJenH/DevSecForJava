@@ -133,6 +133,8 @@ func main() {
 	addr := os.Getenv("PORT")
 	if addr == "" {
 		addr = ":8080"
+	} else if addr[0] != ':' {
+		addr = ":" + addr
 	}
 	fmt.Printf("🚀 Server starting on %s\n", addr)
 	fmt.Printf("   Data: %s\n", dataPath)
