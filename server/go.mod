@@ -5,7 +5,6 @@ go 1.24.5
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/labstack/echo/v4 v4.15.1
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

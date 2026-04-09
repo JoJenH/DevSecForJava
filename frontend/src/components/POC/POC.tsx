@@ -12,9 +12,9 @@ interface POCProps {
 }
 
 interface VerifyResult {
-  success: boolean;
-  message: string;
-  result?: unknown;
+  status: number;
+  statusText: string;
+  body: string;
 }
 
 function CodeBlock({ children, className }: { children?: React.ReactNode; className?: string }) {
@@ -44,17 +44,18 @@ function CodeBlock({ children, className }: { children?: React.ReactNode; classN
 }
 
 export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCProps) {
-  const verifyUrl = `/vul/${encodeURIComponent(categoryName)}/${encodeURIComponent(itemName)}`;
-  const fixedUrl = `${verifyUrl}/fixed`;
+  const verifyUrl = `${encodeURIComponent(categoryName)}/${encodeURIComponent(itemName)}`
+  const vulUrl = `/vul/${verifyUrl}`;
+  const fixedUrl = `/fixed/${verifyUrl}`;
   const { localMode, loading: localModeLoading } = useLocalMode();
   const [verifying, setVerifying] = useState(false);
-  const [vulnResult, setVulnResult] = useState<VerifyResult | null>(null);
+  const [vulResult, setVulResult] = useState<VerifyResult | null>(null);
   const [fixedResult, setFixedResult] = useState<VerifyResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [payload, setPayload] = useState(defaultPayload);
 
   const handleVerify = useCallback(async () => {
-    if (!verifyUrl) return;
+    if (!vulUrl) return;
 
     if (localMode === false) {
       setError('漏洞验证功能仅限本地部署使用，请本地部署后使用');
@@ -63,14 +64,14 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
     
     setVerifying(true);
     setError(null);
-    setVulnResult(null);
+    setVulResult(null);
     setFixedResult(null);
     
     try {
       const jsonBody = JSON.stringify({ payload });
       
-      const [vulnRes, fixedRes] = await Promise.all([
-        fetch(verifyUrl, { 
+      const [vulRes, fixedRes] = await Promise.all([
+        fetch(vulUrl, { 
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' },
           body: jsonBody 
@@ -82,34 +83,31 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
         })
       ]);
 
-      const [vulnText, fixedText] = await Promise.all([
-        vulnRes.text(),
+      const [vulText, fixedText] = await Promise.all([
+        vulRes.text(),
         fixedRes.text()
       ]);
 
-      let vulnJson: VerifyResult;
-      let fixedJson: VerifyResult;
+      const vulnJson: VerifyResult = {
+        status: vulRes.status,
+        statusText: vulRes.statusText,
+        body: vulText,
+      };
 
-      try {
-        vulnJson = JSON.parse(vulnText);
-      } catch {
-        vulnJson = { success: vulnRes.ok, message: vulnText };
-      }
+      const fixedJson: VerifyResult = {
+        status: fixedRes.status,
+        statusText: fixedRes.statusText,
+        body: fixedText,
+      };
 
-      try {
-        fixedJson = JSON.parse(fixedText);
-      } catch {
-        fixedJson = { success: fixedRes.ok, message: fixedText };
-      }
-
-      setVulnResult(vulnJson);
+      setVulResult(vulnJson);
       setFixedResult(fixedJson);
     } catch (err) {
       setError(err instanceof Error ? err.message : '请求失败');
     } finally {
       setVerifying(false);
     }
-  }, [verifyUrl, fixedUrl, payload]);
+  }, [vulUrl, fixedUrl, payload]);
 
   return (
     <div className="poc-section">
@@ -127,7 +125,7 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
           </ReactMarkdown>
         </div>
         
-        {verifyUrl && (
+        {vulUrl && (
           <div className="poc-verify-section">
             <label className="poc-verify-label">Payload</label>
             <textarea
@@ -164,32 +162,26 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
           </div>
         )}
         
-        {vulnResult && fixedResult && (
+        {vulResult && fixedResult && (
           <div className="poc-compare">
-            <div className={`poc-compare-card ${vulnResult.success ? 'poc-compare-card--vulnerable' : 'poc-compare-card--safe'}`}>
+            <div className="poc-compare-card poc-compare-card--vulnerable">
               <div className="poc-compare-header">
                 <span className="poc-compare-badge poc-compare-badge--vulnerable">漏洞代码</span>
-                <span className={`poc-compare-status ${vulnResult.success ? 'poc-compare-status--danger' : 'poc-compare-status--success'}`}>
-                  {vulnResult.success ? '⚠️ 可能存在漏洞' : '✅ 安全'}
+                <span className="poc-compare-status poc-compare-status--danger">
+                  {vulResult.status} {vulResult.statusText}
                 </span>
               </div>
-              <div className="poc-compare-message">{vulnResult.message}</div>
-              {vulnResult.result !== undefined && (
-                <pre className="poc-compare-result">{JSON.stringify(vulnResult.result as unknown, null, 2)}</pre>
-              )}
+              <pre className="poc-compare-result">{vulResult.body}</pre>
             </div>
 
-            <div className={`poc-compare-card ${fixedResult.success ? 'poc-compare-card--safe' : 'poc-compare-card--safe'}`}>
+            <div className="poc-compare-card poc-compare-card--safe">
               <div className="poc-compare-header">
                 <span className="poc-compare-badge poc-compare-badge--fixed">修复代码</span>
-                <span className={`poc-compare-status ${fixedResult.success ? 'poc-compare-status--success' : 'poc-compare-status--warning'}`}>
-                  {fixedResult.success ? '✅ 安全' : '⚠️ 需要检查'}
+                <span className="poc-compare-status poc-compare-status--success">
+                  {fixedResult.status} {fixedResult.statusText}
                 </span>
               </div>
-              <div className="poc-compare-message">{fixedResult.message}</div>
-              {fixedResult.result !== undefined && (
-                <pre className="poc-compare-result">{JSON.stringify(fixedResult.result as unknown, null, 2)}</pre>
-              )}
+              <pre className="poc-compare-result">{fixedResult.body}</pre>
             </div>
           </div>
         )}
