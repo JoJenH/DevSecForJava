@@ -1,8 +1,8 @@
 services:
-  java-verify:
+  java-vul:
     build:
       context: .
-      dockerfile: java/java-vul-verify/Dockerfile
+      dockerfile: java/java-vul/Dockerfile
     container_name: devsec-java-verify
     profiles:
       - local
@@ -12,7 +12,7 @@ services:
   java-fixed:
     build:
       context: .
-      dockerfile: java/java-vul-fixed/Dockerfile
+      dockerfile: java/java-fixed/Dockerfile
     container_name: devsec-java-fixed
     profiles:
       - local
@@ -28,7 +28,7 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
-      - JAVA_SERVICE_ADDR=http://java-verify:8081
+      - JAVA_SERVICE_ADDR=http://java-vul:8081
       - JAVA_FIXED_SERVICE_ADDR=http://java-fixed:8082
       - DATA_PATH=/app/data
       - DIST_PATH=/app/dist

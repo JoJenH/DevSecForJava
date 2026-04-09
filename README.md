@@ -24,8 +24,8 @@ DevSec/
 │   └── ...
 │
 ├── java/                  # Java 漏洞验证服务
-│   ├── java-vul-verify/  # 漏洞演示服务 (不安全)
-│   └── java-vul-fixed/   # 修复演示服务 (安全)
+│   ├── java-vul/        # 漏洞演示服务 (不安全)
+│   └── java-fixed/      # 修复演示服务 (安全)
 │
 ├── server/                # Go API 网关
 │   ├── main.go
