@@ -82,6 +82,18 @@ func main() {
 		javaFixedAddr = "http://localhost:8082"
 	}
 
+	localMode := os.Getenv("LOCAL_MODE") == "true"
+
+	addr := os.Getenv("PORT")
+	if addr == "" {
+		addr = "127.0.0.1:8080"
+		localMode = true
+	}
+
+	if !localMode {
+		fmt.Println("⚠️ 在线环境已启动，漏洞验证功能仅限本地部署使用")
+	}
+
 	store, err := NewStore(dataPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize store: %v\n", err)
@@ -100,6 +112,12 @@ func main() {
 	api.POST("/auth/login", HandleLogin(editToken))
 	api.GET("/auth/check", HandleAuthCheck())
 
+	api.GET("/config", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]bool{
+			"localMode": localMode,
+		})
+	})
+
 	api.GET("/categories", HandleListCategories(store))
 	api.GET("/categories/:name", HandleGetCategory(store))
 
@@ -110,12 +128,36 @@ func main() {
 	edit.PUT("/categories/:name", HandleUpdateCategory(store))
 	edit.DELETE("/categories/:name", HandleDeleteCategory(store))
 
-	vulProxy := createProxy(javaAddr)
-	e.Any("/vul/*", echo.WrapHandler(vulProxy))
-	e.GET("/vul", echo.WrapHandler(vulProxy))
+	if localMode {
+		vulProxy := createProxy(javaAddr)
+		e.Any("/vul/*", echo.WrapHandler(vulProxy))
+		e.GET("/vul", echo.WrapHandler(vulProxy))
 
-	vulFixedProxy := createProxy(javaFixedAddr)
-	e.Any("/vul/*/fixed", echo.WrapHandler(vulFixedProxy))
+		fixedProxy := createProxy(javaFixedAddr)
+		e.Any("/fixed/*", echo.WrapHandler(fixedProxy))
+		e.GET("/fixed", echo.WrapHandler(fixedProxy))
+	} else {
+		e.GET("/vul/*", func(c echo.Context) error {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
+			})
+		})
+		e.GET("/vul", func(c echo.Context) error {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
+			})
+		})
+		e.GET("/fixed/*", func(c echo.Context) error {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
+			})
+		})
+		e.GET("/fixed", func(c echo.Context) error {
+			return c.JSON(http.StatusForbidden, map[string]string{
+				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
+			})
+		})
+	}
 
 	distDir := http.Dir(distPath)
 
@@ -130,16 +172,14 @@ func main() {
 		e.GET("/*", fallback)
 	}
 
-	addr := os.Getenv("PORT")
-	if addr == "" {
-		addr = ":8080"
-	} else if addr[0] != ':' {
-		addr = ":" + addr
-	}
 	fmt.Printf("🚀 Server starting on %s\n", addr)
 	fmt.Printf("   Data: %s\n", dataPath)
 	fmt.Printf("   Dist: %s\n", distPath)
-	fmt.Printf("   Java: %s\n", javaAddr)
-	fmt.Printf("   Java Fixed: %s\n", javaFixedAddr)
+	if localMode {
+		fmt.Printf("   Java: %s\n", javaAddr)
+		fmt.Printf("   Java Fixed: %s\n", javaFixedAddr)
+	} else {
+		fmt.Println("   Java: ⚠️ 漏洞验证功能仅限本地部署使用")
+	}
 	e.Logger.Fatal(e.Start(addr))
 }

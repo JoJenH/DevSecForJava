@@ -87,6 +87,10 @@ export const api = {
     return request<CategoryContent>(`/categories/${encodeURIComponent(name)}`);
   },
 
+  getConfig(): Promise<{ localMode: boolean }> {
+    return request<{ localMode: boolean }>('/config');
+  },
+
   createCategory(name: string): Promise<CategoryInfo> {
     return request<CategoryInfo>('/edit/categories', {
       method: 'POST',

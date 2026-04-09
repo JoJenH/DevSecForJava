@@ -31,7 +31,7 @@ build_java-fixed() {
     echo ""
 }
 
-build_go() {
+build_backend() {
     echo "📦 Building Go server..."
     echo ""
 }
@@ -40,7 +40,7 @@ build_all() {
     build_frontend
     build_java-vul
     build_java-fixed
-    build_go
+    build_backend
 }
 
 start_all() {
@@ -81,7 +81,6 @@ start_all() {
     echo ""
     echo "Starting Go server (8080)..."
     cd "$PROJECT_DIR/server"
-    export PORT=8080
     export JAVA_SERVICE_ADDR=http://localhost:8081
     export JAVA_FIXED_SERVICE_ADDR=http://localhost:8082
     export DATA_PATH="$PROJECT_DIR/data"
@@ -188,8 +187,8 @@ case "${1:-start}" in
     java-fixed)
         build_java-fixed
         ;;
-    go)
-        build_go
+    backend)
+        build_backend
         ;;
     build)
         build_all
@@ -208,12 +207,16 @@ case "${1:-start}" in
         esac
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|build|status|logs}"
+        echo "Usage: $0 {start|stop|restart|frontend|java-vul|java-fixed|backend|build|status|logs}"
         echo ""
         echo "Commands:"
         echo "  start   - Start all services"
         echo "  stop    - Stop all services"
         echo "  restart - Restart all services"
+        echo "  frontend - Build frontend"
+        echo "  java-vul - Build Java vulnerability service"
+        echo "  java-fixed - Build Java fixed service"
+        echo "  backend - Build Go server"
         echo "  build   - Build all services"
         echo "  status  - Check service status"
         echo "  logs    - View logs (verify|fixed|server|all)"

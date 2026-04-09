@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useLocalMode } from '../../hooks/useLocalMode';
 import './POC.css';
 
 interface POCProps {
@@ -45,6 +46,7 @@ function CodeBlock({ children, className }: { children?: React.ReactNode; classN
 export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCProps) {
   const verifyUrl = `/vul/${encodeURIComponent(categoryName)}/${encodeURIComponent(itemName)}`;
   const fixedUrl = `${verifyUrl}/fixed`;
+  const { localMode, loading: localModeLoading } = useLocalMode();
   const [verifying, setVerifying] = useState(false);
   const [vulnResult, setVulnResult] = useState<VerifyResult | null>(null);
   const [fixedResult, setFixedResult] = useState<VerifyResult | null>(null);
@@ -53,6 +55,11 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
 
   const handleVerify = useCallback(async () => {
     if (!verifyUrl) return;
+
+    if (localMode === false) {
+      setError('漏洞验证功能仅限本地部署使用，请本地部署后使用');
+      return;
+    }
     
     setVerifying(true);
     setError(null);
@@ -130,13 +137,23 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
               placeholder="输入验证用的 payload"
               rows={4}
             />
-            <button 
-              className="poc-verify-btn" 
-              onClick={handleVerify}
-              disabled={verifying}
-            >
-              {verifying ? '验证中...' : '🚀 一键验证对比'}
-            </button>
+            {localMode === false ? (
+              <button 
+                className="poc-verify-btn" 
+                onClick={handleVerify}
+                disabled={true}
+              >
+                🔒 在线环境不可用，请本地部署
+              </button>
+            ) : (
+              <button 
+                className="poc-verify-btn" 
+                onClick={handleVerify}
+                disabled={verifying || localModeLoading}
+              >
+                {localModeLoading ? '加载中...' : verifying ? '验证中...' : '🚀 一键验证对比'}
+              </button>
+            )}
           </div>
         )}
         
