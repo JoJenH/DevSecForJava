@@ -6,27 +6,41 @@ PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "===== DevSec 本地开发启动脚本 ====="
 echo ""
 
-build_all() {
-    echo "📦 Building all services..."
+build_frontend() {
+    echo "📦 Building frontend..."
     echo ""
-
-    echo "Building frontend..."
     cd "$PROJECT_DIR/frontend"
-    npm install
+    # npm install
     npm run build
     echo ""
+}
 
-    echo "Building Java services..."
-    cd "$PROJECT_DIR/java/java-vul-verify"
-    mvn package -DskipTests -q
+build_java-vul() {
+    echo "📦 Building Java services..."
+    echo ""
     cd "$PROJECT_DIR/java/java-vul-fixed"
     mvn package -DskipTests -q
     echo ""
+}
 
-    echo "Building Go server..."
-    cd "$PROJECT_DIR/server"
-    go build -o devsec-server .
+build_java-fixed() {
+    echo "📦 Building Java fixed service..."
     echo ""
+    cd "$PROJECT_DIR/java/java-vul-fixed"
+    mvn package -DskipTests -q
+    echo ""
+}
+
+build_go() {
+    echo "📦 Building Go server..."
+    echo ""
+}
+
+build_all() {
+    build_frontend
+    build_java-vul
+    build_java-fixed
+    build_go
 }
 
 start_all() {
@@ -164,6 +178,18 @@ case "${1:-start}" in
         stop_all
         sleep 2
         start_all
+        ;;
+    frontend)
+        build_frontend
+        ;;
+    java-vul)
+        build_java-vul
+        ;;
+    java-fixed)
+        build_java-fixed
+        ;;
+    go)
+        build_go
         ;;
     build)
         build_all

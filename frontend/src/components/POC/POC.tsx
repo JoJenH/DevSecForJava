@@ -52,7 +52,7 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
   const [payload, setPayload] = useState(defaultPayload);
 
   const handleVerify = useCallback(async () => {
-    if (!verifyUrl || !payload) return;
+    if (!verifyUrl) return;
     
     setVerifying(true);
     setError(null);
@@ -133,7 +133,7 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
             <button 
               className="poc-verify-btn" 
               onClick={handleVerify}
-              disabled={verifying || !payload}
+              disabled={verifying}
             >
               {verifying ? '验证中...' : '🚀 一键验证对比'}
             </button>

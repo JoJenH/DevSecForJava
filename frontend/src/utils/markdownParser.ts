@@ -4,6 +4,7 @@ interface ParsedSection {
   type: 'description' | 'vulnerableCode' | 'fixedCode' | 'auditPoints' | 'fixPoints' | 'poc' | 'payload' | 'unknown';
   content: string;
   items?: string[];
+  language?: string;
 }
 
 export function parseMarkdown(content: string): VulnerabilityCategory {
@@ -19,6 +20,8 @@ export function parseMarkdown(content: string): VulnerabilityCategory {
     description: '',
     vulnerableCode: '',
     fixedCode: '',
+    vulnerableCodeLanguage: 'java',
+    fixedCodeLanguage: 'java',
     auditPoints: [],
     fixPoints: [],
     poc: '',
@@ -38,6 +41,8 @@ export function parseMarkdown(content: string): VulnerabilityCategory {
         description: '',
         vulnerableCode: '',
         fixedCode: '',
+        vulnerableCodeLanguage: 'java',
+        fixedCodeLanguage: 'java',
         auditPoints: [],
         fixPoints: [],
         poc: '',
@@ -96,6 +101,12 @@ export function parseMarkdown(content: string): VulnerabilityCategory {
     }
 
     if (trimmed.startsWith('```')) {
+      const langMatch = trimmed.match(/^```(\w*)$/);
+      const lang = langMatch ? (langMatch[1] || undefined) : undefined;
+      
+      if (lang && (currentSection.type === 'vulnerableCode' || currentSection.type === 'fixedCode')) {
+        currentSection.language = lang;
+      }
       continue;
     }
 
@@ -138,15 +149,22 @@ export function parseMarkdown(content: string): VulnerabilityCategory {
 }
 
 function applySectionToItem(item: VulnerabilityItem, section: ParsedSection) {
+  const language = section.language;
   switch (section.type) {
     case 'description':
       item.description = section.content.trim();
       break;
     case 'vulnerableCode':
       item.vulnerableCode = section.content.trim();
+      if (language) {
+        item.vulnerableCodeLanguage = language;
+      }
       break;
     case 'fixedCode':
       item.fixedCode = section.content.trim();
+      if (language) {
+        item.fixedCodeLanguage = language;
+      }
       break;
     case 'auditPoints':
       item.auditPoints = section.items || [];

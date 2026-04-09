@@ -32,7 +32,6 @@
 }
 
 .code-diff-header-tags {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -66,14 +65,20 @@
 
 .code-diff-container {
   overflow: hidden;
+  display: flex;
 }
 
-.code-diff-container .monaco-diff-editor {
-  border-radius: 0 0 8px 8px;
+.code-diff-panel {
+  flex: 1;
+  border-right: 1px solid var(--border);
 }
 
-.code-diff-container .monaco-diff-editor .diffOverview {
-  border-radius: 0 0 8px 0;
+.code-diff-panel:last-child {
+  border-right: none;
+}
+
+.code-diff-panel .monaco-editor {
+  border-radius: 0;
 }
 
 @media (max-width: 1024px) {

@@ -125,6 +125,8 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
               <CodeDiff
                 vulnerableCode={item.vulnerableCode}
                 fixedCode={item.fixedCode}
+                vulnerableCodeLanguage={item.vulnerableCodeLanguage}
+                fixedCodeLanguage={item.fixedCodeLanguage}
               />
 
               <CheckList

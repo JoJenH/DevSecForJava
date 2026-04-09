@@ -3,6 +3,8 @@ export interface VulnerabilityItem {
   description: string;
   vulnerableCode: string;
   fixedCode: string;
+  vulnerableCodeLanguage?: string;
+  fixedCodeLanguage?: string;
   auditPoints: string[];
   fixPoints: string[];
   poc: string;

@@ -25,3 +25,8 @@ dist-ssr
 
 # Go build output
 server/devsec-server
+
+# Java build output
+java/*/target/
+java/*.iml
+java/.idea/

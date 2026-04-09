@@ -1,8 +1,0 @@
-com/devsec/vulfixed/controller/FixedController.class
-com/devsec/vulfixed/model/VerifyResponse.class
-com/devsec/vulfixed/service/FixedVerifyService.class
-com/devsec/vulfixed/VulFixedApplication.class
-com/devsec/vulfixed/service/impl/RCEFixedVerifyService.class
-com/devsec/vulfixed/service/FixedServiceRegistry.class
-com/devsec/vulfixed/config/FixedServiceConfig.class
-com/devsec/vulfixed/model/VerifyRequest.class

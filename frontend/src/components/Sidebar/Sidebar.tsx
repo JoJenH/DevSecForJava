@@ -4,20 +4,20 @@ import './Sidebar.css';
 
 interface SidebarProps {
   categories: CategoryInfo[];
+  categoryItemsMap: Map<string, VulnerabilityItem[]>;
   selectedItemId: string | null;
   onSelectItem: (itemId: string) => void;
   expandedCategories: Set<string>;
   onToggleCategory: (categoryId: string) => void;
-  currentCategoryItems?: VulnerabilityItem[];
 }
 
 export function Sidebar({
   categories,
+  categoryItemsMap,
   selectedItemId,
   onSelectItem,
   expandedCategories,
   onToggleCategory,
-  currentCategoryItems,
 }: SidebarProps) {
   const navigate = useNavigate();
   const { categoryId: encodedCategoryId } = useParams<{ categoryId: string }>();
@@ -50,9 +50,9 @@ export function Sidebar({
               </span>
               <span className="category-name">{category.name}</span>
             </button>
-            {expandedCategories.has(category.name) && currentCategoryItems && (
+            {expandedCategories.has(category.name) && categoryItemsMap.get(category.name) && (
               <ul className="category-items">
-                {currentCategoryItems.map((item, index) => (
+                {categoryItemsMap.get(category.name)!.map((item, index) => (
                   <li key={index}>
                     <button
                       className={`item-button ${selectedItemId === item.name ? 'active' : ''}`}

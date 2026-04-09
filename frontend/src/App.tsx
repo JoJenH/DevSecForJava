@@ -72,7 +72,7 @@ function EditGuard({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { categories, loading: categoriesLoading, error: categoriesError, refresh } = useCategories();
+  const { categories, categoryItemsMap, loading: categoriesLoading, error: categoriesError, refresh } = useCategories();
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { theme, toggleTheme } = useTheme();
@@ -82,7 +82,6 @@ function AppContent() {
 
   const { categoryId } = useParams<{ categoryId: string }>();
   const currentCategoryName = categoryId ? decodeURIComponent(categoryId) : null;
-  const { category: currentCategory, loading: categoryLoading } = useCategory(currentCategoryName || null);
 
   const handleSelectItem = useCallback((itemId: string) => {
     setSelectedItemId(itemId);
@@ -148,11 +147,11 @@ function AppContent() {
     <div className="app">
       <Sidebar
         categories={categories}
+        categoryItemsMap={categoryItemsMap}
         selectedItemId={selectedItemId}
         onSelectItem={handleSelectItem}
         expandedCategories={expandedCategories}
         onToggleCategory={handleToggleCategory}
-        currentCategoryItems={!categoryLoading && currentCategory ? currentCategory.items : undefined}
       />
       <div className="theme-toggle">
         <button onClick={toggleTheme} className="theme-toggle-button">

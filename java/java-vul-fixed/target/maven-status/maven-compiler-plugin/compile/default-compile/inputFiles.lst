@@ -1,8 +1,0 @@
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/model/VerifyResponse.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/service/FixedVerifyService.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/VulFixedApplication.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/controller/FixedController.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/model/VerifyRequest.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/service/impl/RCEFixedVerifyService.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/service/FixedServiceRegistry.java
-/Users/jojenh/Project/DevSec/java-vul-fixed/src/main/java/com/devsec/vulfixed/config/FixedServiceConfig.java
