@@ -29,13 +29,13 @@ spring:
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.devsec.vulverify.model
+  type-aliases-package: com.devsec.vulnerability.model
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 logging:
   level:
-    com.devsec.vulverify: DEBUG
+    com.devsec.vulnerability: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG

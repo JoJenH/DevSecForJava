@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.devsec</groupId>
-    <artifactId>vul-verify</artifactId>
+    <artifactId>vulnerability</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>vul-verify</name>
+    <name>vulnerability</name>
     <description>Vulnerability Verification Service</description>
 
     <parent>

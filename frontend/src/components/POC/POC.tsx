@@ -44,9 +44,8 @@ function CodeBlock({ children, className }: { children?: React.ReactNode; classN
 }
 
 export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCProps) {
-  const verifyUrl = `${encodeURIComponent(categoryName)}/${encodeURIComponent(itemName)}`
-  const vulUrl = `/vul/${verifyUrl}`;
-  const fixedUrl = `/fixed/${verifyUrl}`;
+  const vulUrl = `/vul/verify`;
+  const fixedUrl = `/fixed/verify`;
   const { localMode, loading: localModeLoading } = useLocalMode();
   const [verifying, setVerifying] = useState(false);
   const [vulResult, setVulResult] = useState<VerifyResult | null>(null);
@@ -68,7 +67,11 @@ export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCPro
     setFixedResult(null);
     
     try {
-      const jsonBody = JSON.stringify({ payload });
+      const jsonBody = JSON.stringify({ 
+        payload, 
+        category: categoryName, 
+        item: itemName 
+      });
       
       const [vulRes, fixedRes] = await Promise.all([
         fetch(vulUrl, { 

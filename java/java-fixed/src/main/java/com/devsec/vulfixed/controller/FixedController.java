@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/vul")
+@RequestMapping("/fixed")
 public class FixedController {
     private static final Logger logger = LoggerFactory.getLogger(FixedController.class);
 
@@ -25,19 +25,19 @@ public class FixedController {
         this.registry = registry;
     }
 
-    @PostMapping("/{category}/{item}/fixed")
+    @PostMapping("/verify")
     public ResponseEntity<VerifyResponse> verifyFixed(
-            @PathVariable String category,
-            @PathVariable String item,
-            @Valid @RequestBody(required = false) VerifyRequest request) {
+            @Valid @RequestBody VerifyRequest request) {
+
+        String category = request.getCategory();
+        String item = request.getItem();
 
         logger.info("Received fixed verification request: category={}, item={}", category, item);
 
-        if (request == null) {
-            request = new VerifyRequest();
+        if (category == null || item == null) {
+            VerifyResponse response = VerifyResponse.error("Missing category or item in request body");
+            return ResponseEntity.badRequest().body(response);
         }
-        request.setCategory(category);
-        request.setItem(item);
 
         FixedVerifyService service = registry.getService(category, item);
 
