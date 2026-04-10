@@ -1,15 +1,14 @@
-import { Editor } from '@monaco-editor/react';
+import { DiffEditor } from '@monaco-editor/react';
 import { useTheme } from '../../hooks/useTheme';
 import './CodeDiff.css';
 
 interface CodeDiffProps {
   vulnerableCode: string;
   fixedCode: string;
-  vulnerableCodeLanguage?: string;
-  fixedCodeLanguage?: string;
+  language?: string;
 }
 
-export function CodeDiff({ vulnerableCode, fixedCode, vulnerableCodeLanguage = 'java', fixedCodeLanguage = 'java' }: CodeDiffProps) {
+export function CodeDiff({ vulnerableCode, fixedCode, language = 'java' }: CodeDiffProps) {
   const { isDark } = useTheme();
 
   const editorOptions = {
@@ -18,9 +17,10 @@ export function CodeDiff({ vulnerableCode, fixedCode, vulnerableCodeLanguage = '
     automaticLayout: true,
     scrollBeyondLastLine: false,
     minimap: { enabled: false },
-    folding: false,
+    folding: true,
     lineNumbers: 'on' as const,
-    renderLineHighlight: 'none' as const,
+    renderSideBySide: true,
+    diffWordWrap: 'on' as const,
     scrollbar: {
       vertical: 'auto' as const,
       horizontal: 'auto' as const,
@@ -33,30 +33,21 @@ export function CodeDiff({ vulnerableCode, fixedCode, vulnerableCodeLanguage = '
         <span className="code-diff-header-icon">⟨⟩</span>
         <h3 className="code-diff-header-title">代码对比</h3>
         <div className="code-diff-header-tags">
-          <span className="code-diff-tag code-diff-tag--danger">漏洞代码({vulnerableCodeLanguage})</span>
+          <span className="code-diff-tag">{language}</span>
+          <span className="code-diff-tag code-diff-tag--danger">漏洞代码</span>
           <span className="code-diff-arrow">→</span>
-          <span className="code-diff-tag code-diff-tag--success">修复代码({fixedCodeLanguage})</span>
+          <span className="code-diff-tag code-diff-tag--success">修复代码</span>
         </div>
       </div>
       <div className="code-diff-container">
-        <div className="code-diff-panel">
-          <Editor
-            height="200px"
-            language={vulnerableCodeLanguage}
-            theme={isDark ? 'vs-dark' : 'light'}
-            value={vulnerableCode}
-            options={editorOptions}
-          />
-        </div>
-        <div className="code-diff-panel">
-          <Editor
-            height="200px"
-            language={fixedCodeLanguage}
-            theme={isDark ? 'vs-dark' : 'light'}
-            value={fixedCode}
-            options={editorOptions}
-          />
-        </div>
+        <DiffEditor
+          height="300px"
+          language={language}
+          theme={isDark ? 'vs-dark' : 'light'}
+          original={vulnerableCode}
+          modified={fixedCode}
+          options={editorOptions}
+        />
       </div>
     </div>
   );
