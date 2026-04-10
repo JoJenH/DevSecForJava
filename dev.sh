@@ -81,6 +81,8 @@ start_all() {
     echo ""
     echo "Starting Go server (8080)..."
     cd "$PROJECT_DIR/server"
+    export PORT=:8080
+    export LOCAL_MODE=true
     export JAVA_SERVICE_ADDR=http://localhost:8081
     export JAVA_FIXED_SERVICE_ADDR=http://localhost:8082
     export DATA_PATH="$PROJECT_DIR/data"

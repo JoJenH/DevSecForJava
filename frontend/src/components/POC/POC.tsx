@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useLocalMode } from '../../hooks/useLocalMode';
+import { useConfig } from '../../hooks/useConfig';
 import './POC.css';
 
 interface POCProps {
@@ -46,7 +46,7 @@ function CodeBlock({ children, className }: { children?: React.ReactNode; classN
 export function POC({ poc, categoryName, itemName, defaultPayload = '' }: POCProps) {
   const vulUrl = `/vul/verify`;
   const fixedUrl = `/fixed/verify`;
-  const { localMode, loading: localModeLoading } = useLocalMode();
+  const { localMode, loading: localModeLoading } = useConfig();
   const [verifying, setVerifying] = useState(false);
   const [vulResult, setVulResult] = useState<VerifyResult | null>(null);
   const [fixedResult, setFixedResult] = useState<VerifyResult | null>(null);

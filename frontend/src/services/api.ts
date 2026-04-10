@@ -2,6 +2,13 @@ import type { CategoryInfo, CategoryContent } from '../types';
 
 const API_BASE = '/api';
 const TOKEN_KEY = 'access_token';
+const CACHE_PREFIX = 'api_cache_';
+const DEFAULT_CACHE_TTL = 5 * 60 * 1000;
+
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
 
 function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -13,6 +20,36 @@ function setToken(token: string) {
 
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+function getCache<T>(key: string, ttl: number = DEFAULT_CACHE_TTL): T | null {
+  const cached = localStorage.getItem(CACHE_PREFIX + key);
+  if (!cached) return null;
+  try {
+    const entry: CacheEntry<T> = JSON.parse(cached);
+    if (Date.now() - entry.timestamp < ttl) {
+      return entry.data;
+    }
+    localStorage.removeItem(CACHE_PREFIX + key);
+  } catch {
+    localStorage.removeItem(CACHE_PREFIX + key);
+  }
+  return null;
+}
+
+function setCache<T>(key: string, data: T): void {
+  const entry: CacheEntry<T> = { data, timestamp: Date.now() };
+  localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry));
+}
+
+function clearCache(key?: string): void {
+  if (key) {
+    localStorage.removeItem(CACHE_PREFIX + key);
+  } else {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(CACHE_PREFIX))
+      .forEach(k => localStorage.removeItem(k));
+  }
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
@@ -79,16 +116,43 @@ export const auth = {
 };
 
 export const api = {
-  getCategories(): Promise<CategoryInfo[]> {
-    return request<CategoryInfo[]>('/categories');
+  getCategories(useCache: boolean = true): Promise<CategoryInfo[]> {
+    if (useCache) {
+      const cached = getCache<CategoryInfo[]>('categories');
+      if (cached) return Promise.resolve(cached);
+    }
+    return request<CategoryInfo[]>('/categories').then(data => {
+      setCache('categories', data);
+      return data;
+    });
   },
 
-  getCategory(name: string): Promise<CategoryContent> {
-    return request<CategoryContent>(`/categories/${encodeURIComponent(name)}`);
+  getCategory(name: string, useCache: boolean = true): Promise<CategoryContent> {
+    const cacheKey = `category_${encodeURIComponent(name)}`;
+    if (useCache) {
+      const cached = getCache<CategoryContent>(cacheKey);
+      if (cached) return Promise.resolve(cached);
+    }
+    return request<CategoryContent>(`/categories/${encodeURIComponent(name)}`).then(data => {
+      setCache(cacheKey, data);
+      return data;
+    });
   },
 
   getConfig(): Promise<{ localMode: boolean }> {
-    return request<{ localMode: boolean }>('/config');
+    const cached = getCache<{ localMode: boolean }>('config');
+    if (cached) return Promise.resolve(cached);
+    return request<{ localMode: boolean }>('/config').then(data => {
+      setCache('config', data);
+      return data;
+    });
+  },
+
+  invalidateCategoriesCache(): void {
+    clearCache('categories');
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(CACHE_PREFIX + 'category_'))
+      .forEach(k => localStorage.removeItem(k));
   },
 
   createCategory(name: string): Promise<CategoryInfo> {

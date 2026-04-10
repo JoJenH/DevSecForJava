@@ -6,6 +6,7 @@ import { EditorPage } from './components/EditorPage/EditorPage';
 import { LoginPage } from './components/LoginPage/LoginPage';
 import { useCategories, useCategory } from './hooks/useVulnerabilities';
 import { useTheme } from './hooks/useTheme';
+import { ConfigProvider } from './hooks/useConfig';
 import { auth } from './services/api';
 import './App.css';
 
@@ -97,6 +98,7 @@ function AppContent() {
       if (newSet.has(categoryName)) {
         newSet.delete(categoryName);
       } else {
+        newSet.clear();
         newSet.add(categoryName);
       }
       return newSet;
@@ -180,7 +182,9 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <ConfigProvider>
+        <AppContent />
+      </ConfigProvider>
     </BrowserRouter>
   );
 }
