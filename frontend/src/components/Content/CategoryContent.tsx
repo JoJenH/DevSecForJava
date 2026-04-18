@@ -57,7 +57,14 @@ export function CategoryContent({ category, selectedItemId, onScrollItem }: Cate
 
   useEffect(() => {
     lastScrolledItemId.current = null;
-  }, [category.name]);
+    itemRefs.current.clear();
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+    if (category.items.length > 0) {
+      onScrollItem(category.items[0].name);
+    }
+  }, [category.name, category.items, onScrollItem]);
 
   useEffect(() => {
     if (!selectedItemId) return;

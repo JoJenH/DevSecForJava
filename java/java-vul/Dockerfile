@@ -15,17 +15,22 @@ RUN mkdir -p /root/.m2 && \
 
 WORKDIR /build
 
-COPY java/java-vul-verify/pom.xml .
-RUN mvn dependency:go-offline -B
+COPY java/java-vul/target/ ./target/
+COPY java/java-vul/pom.xml .
+COPY java/java-vul/src ./src
 
-COPY java/java-vul-verify/src ./src
-RUN mvn package -DskipTests -B
+RUN if ls target/*.jar 1>/dev/null 2>&1; then \
+        echo "Using existing jar, skipping build"; \
+    else \
+        echo "Building from source..."; \
+        mvn dependency:go-offline -B && \
+        mvn package -DskipTests -B; \
+    fi
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
-RUN apk add --no-cache curl && \
-    addgroup -g 1000 appgroup && \
-    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
+RUN groupadd -g 1000 appgroup && \
+    useradd -u 1000 -g appgroup -m -s /bin/bash appuser
 
 WORKDIR /app
 

@@ -1,227 +1,247 @@
 #!/bin/bash
-set -e
+# DevSec 本地开发脚本
+set -eo pipefail
 
+# ─────────────────────────────────────────────
+# 配置
+# ─────────────────────────────────────────────
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOG_DIR="/tmp/devsec/logs"
+PID_DIR="/tmp/devsec"
+mkdir -p "$LOG_DIR" "$PID_DIR"
 
-echo "===== DevSec 本地开发启动脚本 ====="
-echo ""
+HEALTH_TIMEOUT=60
+HEALTH_INTERVAL=2
 
+# 服务配置: name|port|dir|binary|health_endpoint
+SERVICE_VUL="java-vul|8081|$PROJECT_DIR/java/java-vul|target/vulnerability-*.jar|/vul/health"
+SERVICE_FIXED="java-fixed|8082|$PROJECT_DIR/java/java-fixed|target/vul-fixed-*.jar|/fixed/health"
+SERVICE_SERVER="go-server|8080|$PROJECT_DIR/server|devsec-server|/api/auth/check"
+
+# ─────────────────────────────────────────────
+# 工具函数
+# ─────────────────────────────────────────────
+log() { echo "  $*"; }
+ok()  { echo "  ✅ $*"; }
+warn() { echo "  ⚠️  $*"; }
+err() { echo "  ❌ $*" >&2; }
+
+wait_health() {
+    local url="$1" name="$2" elapsed=0
+    log "Waiting for $name..."
+    while ! curl -sf "$url" >/dev/null 2>&1; do
+        if (( elapsed >= HEALTH_TIMEOUT )); then
+            err "$name timeout"
+            return 1
+        fi
+        sleep "$HEALTH_INTERVAL"
+        (( elapsed += HEALTH_INTERVAL ))
+    done
+    ok "$name ready (${elapsed}s)"
+}
+
+port_used() { lsof -ti tcp:"$1" >/dev/null 2>&1; }
+
+kill_port() {
+    local pids
+    pids=$(lsof -ti tcp:"$1" 2>/dev/null) || return 0
+    [[ -n "$pids" ]] && echo "$pids" | xargs kill 2>/dev/null
+}
+
+# ─────────────────────────────────────────────
+# 服务解析
+# ─────────────────────────────────────────────
+parse_service() {
+    local key="$1"
+    case "$key" in
+        vul)    SERVICE="$SERVICE_VUL" ;;
+        fixed)  SERVICE="$SERVICE_FIXED" ;;
+        server) SERVICE="$SERVICE_SERVER" ;;
+        *)      err "Unknown service: $key"; err "Available: vul, fixed, server"; exit 1 ;;
+    esac
+    IFS='|' read -r NAME PORT DIR BINARY HEALTH <<< "$SERVICE"
+    PID_FILE="$PID_DIR/devsec-$key.pid"
+    LOG_FILE="$LOG_DIR/$key.log"
+}
+
+resolve_binary() {
+    if [[ "$BINARY" == target/*.jar ]]; then
+        BINARY=$(ls "$DIR"/$BINARY 2>/dev/null | head -1)
+        [[ -f "$BINARY" ]] || { err "Jar not found. Run: $0 build $1"; exit 1; }
+    else
+        BINARY="$DIR/$BINARY"
+        [[ -x "$BINARY" ]] || { err "Binary not found. Run: $0 build $1"; exit 1; }
+    fi
+}
+
+# ─────────────────────────────────────────────
+# 构建命令
+# ─────────────────────────────────────────────
 build_frontend() {
-    echo "📦 Building frontend..."
-    echo ""
+    log "📦 Building frontend..."
     cd "$PROJECT_DIR/frontend"
-    # npm install
-    npm run build
-    echo ""
+    npm install --prefer-offline >/dev/null 2>&1
+    npm run build >/dev/null 2>&1
+    ok "Frontend built"
 }
 
-build_java-vul() {
-    echo "📦 Building Java services..."
-    echo ""
-    cd "$PROJECT_DIR/java/java-vul"
-    mvn package -DskipTests -q
-    echo ""
-}
-
-build_java-fixed() {
-    echo "📦 Building Java fixed service..."
-    echo ""
-    cd "$PROJECT_DIR/java/java-fixed"
-    mvn package -DskipTests -q
-    echo ""
-}
-
-build_backend() {
-    echo "📦 Building Go server..."
-    echo ""
+build_service() {
+    local key="$1"
+    parse_service "$key"
+    log "📦 Building $NAME..."
+    cd "$DIR"
+    case "$key" in
+        vul|fixed) mvn package -DskipTests -q ;;
+        server) go build -o devsec-server . ;;
+    esac
+    ok "$NAME built"
 }
 
 build_all() {
     build_frontend
-    build_java-vul
-    build_java-fixed
-    build_backend
+    build_service vul
+    build_service fixed
+    build_service server
+}
+
+# ─────────────────────────────────────────────
+# 启动命令
+# ─────────────────────────────────────────────
+start_service() {
+    local key="$1"
+    parse_service "$key"
+    resolve_binary "$key"
+
+    echo "🚀 Starting $NAME (:$PORT)..."
+    port_used "$PORT" && { warn "Port $PORT in use, skipping"; return 0; }
+
+    cd "$DIR"
+    case "$key" in
+        vul|fixed)
+            nohup java -jar "$BINARY" >"$LOG_FILE" 2>&1 &
+            ;;
+        server)
+            PORT=":$PORT" LOCAL_MODE=true \
+            JAVA_SERVICE_ADDR="http://localhost:8081" \
+            JAVA_FIXED_SERVICE_ADDR="http://localhost:8082" \
+            DATA_PATH="$PROJECT_DIR/data" \
+            DIST_PATH="$PROJECT_DIR/frontend/dist" \
+            EDIT_TOKEN=dev \
+            nohup ./devsec-server >"$LOG_FILE" 2>&1 &
+            ;;
+    esac
+    echo $! > "$PID_FILE"
+    log "PID: $(cat $PID_FILE)"
+    wait_health "http://localhost:$PORT$HEALTH" "$NAME"
 }
 
 start_all() {
-    echo "🚀 Starting all services..."
     echo ""
-
-    echo "Starting Java vul (8081)..."
-    cd "$PROJECT_DIR/java/java-vul"
-    mvn spring-boot:run > /tmp/java-vul.log 2>&1 &
-    JAVA_VUL_PID=$!
-    echo "   PID: $JAVA_VUL_PID"
-
-    echo "Waiting for Java vul service..."
-    for i in {1..30}; do
-        if curl -s http://localhost:8081/vul/health > /dev/null 2>&1; then
-            echo "   ✅ Ready"
-            break
-        fi
-        sleep 1
-    done
-
+    echo "===== DevSec ====="
+    start_service vul || exit 1
+    start_service fixed || exit 1
+    start_service server || exit 1
     echo ""
-    echo "Starting Java fixed (8082)..."
-    cd "$PROJECT_DIR/java/java-fixed"
-    mvn spring-boot:run > /tmp/java-fixed.log 2>&1 &
-    JAVA_FIXED_PID=$!
-    echo "   PID: $JAVA_FIXED_PID"
+    echo "🎉 All services running at http://localhost:8080"
+    echo "Logs: $LOG_DIR"
+    echo ""
+}
 
-    echo "Waiting for Java fixed service..."
-    for i in {1..30}; do
-        if curl -s http://localhost:8082/vul/health > /dev/null 2>&1; then
-            echo "   ✅ Ready"
-            break
-        fi
-        sleep 1
-    done
-
-    echo ""
-    echo "Starting Go server (8080)..."
-    cd "$PROJECT_DIR/server"
-    export PORT=:8080
-    export LOCAL_MODE=true
-    export JAVA_SERVICE_ADDR=http://localhost:8081
-    export JAVA_FIXED_SERVICE_ADDR=http://localhost:8082
-    export DATA_PATH="$PROJECT_DIR/data"
-    export DIST_PATH="$PROJECT_DIR/frontend/dist"
-    export EDIT_TOKEN=dev
-    ./devsec-server > /tmp/go-server.log 2>&1 &
-    GO_PID=$!
-    echo "   PID: $GO_PID"
-
-    echo ""
-    echo "Waiting for Go server..."
-    for i in {1..30}; do
-        if curl -s http://localhost:8080/api/auth/check > /dev/null 2>&1; then
-            echo "   ✅ Ready"
-            break
-        fi
-        sleep 1
-    done
-
-    echo ""
-    echo "======================================"
-    echo "🎉 All services started!"
-    echo ""
-    echo "服务地址:"
-    echo "  - 前端:     http://localhost:8080"
-    echo "  - Go API:   http://localhost:8080/api"
-    echo "  - Java vul:  http://localhost:8081/vul"
-    echo "  - Java fixed:  http://localhost:8082/vul"
-    echo ""
-    echo "日志位置:"
-    echo "  - Java vul: /tmp/java-vul.log"
-    echo "  - Java fixed:  /tmp/java-fixed.log"
-    echo "  - Go server:  /tmp/go-server.log"
-    echo ""
-    echo "停止所有服务:"
-    echo "  $0 stop"
-    echo "======================================"
-
-    echo "$JAVA_VUL_PID" > /tmp/devsec-java-vul.pid
-    echo "$JAVA_FIXED_PID" > /tmp/devsec-java-fixed.pid
-    echo "$GO_PID" > /tmp/devsec-go-server.pid
+# ─────────────────────────────────────────────
+# 停止命令
+# ─────────────────────────────────────────────
+stop_service() {
+    local key="$1"
+    parse_service "$key"
+    echo "🛑 Stopping $NAME..."
+    [[ -f "$PID_FILE" ]] && { kill "$(cat "$PID_FILE")" 2>/dev/null || true; rm -f "$PID_FILE"; }
+    kill_port "$PORT"
+    ok "$NAME stopped"
 }
 
 stop_all() {
     echo "🛑 Stopping all services..."
-    if [ -f /tmp/devsec-java-vul.pid ]; then
-        kill $(cat /tmp/devsec-java-vul.pid) 2>/dev/null || true
-        rm /tmp/devsec-java-vul.pid
-    fi
-    if [ -f /tmp/devsec-java-fixed.pid ]; then
-        kill $(cat /tmp/devsec-java-fixed.pid) 2>/dev/null || true
-        rm /tmp/devsec-java-fixed.pid
-    fi
-    if [ -f /tmp/devsec-go-server.pid ]; then
-        kill $(cat /tmp/devsec-go-server.pid) 2>/dev/null || true
-        rm /tmp/devsec-go-server.pid
-    fi
-    echo "✅ All services stopped"
+    for key in vul fixed server; do
+        parse_service "$key"
+        [[ -f "$PID_FILE" ]] && { kill "$(cat "$PID_FILE")" 2>/dev/null || true; rm -f "$PID_FILE"; }
+        kill_port "$PORT"
+    done
+    ok "All services stopped"
 }
 
+# ─────────────────────────────────────────────
+# 状态命令
+# ─────────────────────────────────────────────
 status_all() {
-    echo "📊 Service Status:"
     echo ""
-    echo -n "Java vul (8081):  "
-    if curl -s http://localhost:8081/vul/health > /dev/null 2>&1; then
-        echo "✅ Running"
-    else
-        echo "❌ Stopped"
-    fi
-
-    echo -n "Java fixed (8082):  "
-    if curl -s http://localhost:8082/vul/health > /dev/null 2>&1; then
-        echo "✅ Running"
-    else
-        echo "❌ Stopped"
-    fi
-
-    echo -n "Go server (8080):   "
-    if curl -s http://localhost:8080/api/auth/check > /dev/null 2>&1; then
-        echo "✅ Running"
-    else
-        echo "❌ Stopped"
-    fi
+    echo "📊 Service Status"
+    echo "─────────────────────────────────"
+    for key in vul fixed server; do
+        parse_service "$key"
+        printf "  %-18s" "$NAME (:$PORT)"
+        if curl -sf "http://localhost:$PORT$HEALTH" >/dev/null 2>&1; then
+            local pid=""
+            [[ -f "$PID_FILE" ]] && pid=" (PID $(cat "$PID_FILE"))"
+            echo "✅ Running$pid"
+        else
+            echo "❌ Stopped"
+        fi
+    done
+    echo "─────────────────────────────────"
+    echo ""
 }
 
-case "${1:-start}" in
-    start)
-        start_all
-        ;;
-    stop)
-        stop_all
-        ;;
-    restart)
-        stop_all
-        sleep 2
-        start_all
-        ;;
-    frontend)
-        build_frontend
-        ;;
-    java-vul)
-        build_java-vul
-        ;;
-    java-fixed)
-        build_java-fixed
-        ;;
-    backend)
-        build_backend
-        ;;
+# ─────────────────────────────────────────────
+# 日志命令
+# ─────────────────────────────────────────────
+show_logs() {
+    local key="${1:-all}"
+    case "$key" in
+        all) tail -f "$LOG_DIR"/*.log ;;
+        vul|fixed|server)
+            parse_service "$key"
+            tail -f "$LOG_FILE"
+            ;;
+        *) err "Usage: $0 logs [vul|fixed|server|all]"; exit 1 ;;
+    esac
+}
+
+# ─────────────────────────────────────────────
+# 入口
+# ─────────────────────────────────────────────
+usage() {
+    cat <<EOF
+Usage: $0 <command> [service]
+
+Commands:
+  start [service]   启动服务 (默认全部)
+  stop [service]    停止服务 (默认全部)
+  restart [service] 重启服务 (默认全部)
+  status            查看状态
+  build [service]   构建 (默认全部，service: vul/fixed/server/frontend)
+  logs [service]    查看日志 (默认全部)
+
+Services: vul, fixed, server
+EOF
+}
+
+cmd="${1:-start}"
+arg="${2:-}"
+
+case "$cmd" in
+    start)   [[ -n "$arg" ]] && start_service "$arg" || start_all ;;
+    stop)    [[ -n "$arg" ]] && stop_service "$arg" || stop_all ;;
+    restart) [[ -n "$arg" ]] && { stop_service "$arg"; sleep 1; start_service "$arg"; } || { stop_all; sleep 1; start_all; } ;;
+    status)  status_all ;;
     build)
-        build_all
-        ;;
-    status)
-        status_all
-        ;;
-    logs)
-        shift
-        case "${1:-all}" in
-            vul) tail -f /tmp/java-vul.log ;;
-            fixed) tail -f /tmp/java-fixed.log ;;
-            server) tail -f /tmp/go-server.log ;;
-            all) tail -f /tmp/java-vul.log /tmp/java-fixed.log /tmp/go-server.log ;;
-            *) echo "Usage: $0 logs {vul|fixed|server|all}" ;;
+        case "$arg" in
+            "") build_all ;;
+            frontend) build_frontend ;;
+            vul|fixed|server) build_service "$arg" ;;
+            *) err "Unknown target: $arg"; exit 1 ;;
         esac
         ;;
-    *)
-        echo "Usage: $0 {start|stop|restart|frontend|java-vul|java-fixed|backend|build|status|logs}"
-        echo ""
-        echo "Commands:"
-        echo "  start   - Start all services"
-        echo "  stop    - Stop all services"
-        echo "  restart - Restart all services"
-        echo "  frontend - Build frontend"
-        echo "  java-vul - Build Java vulnerability service"
-        echo "  java-fixed - Build Java fixed service"
-        echo "  backend - Build Go server"
-        echo "  build   - Build all services"
-        echo "  status  - Check service status"
-        echo "  logs    - View logs (vul|fixed|server|all)"
-        exit 1
-        ;;
+    logs) show_logs "$arg" ;;
+    -h|--help|help) usage ;;
+    *) err "Unknown command: $cmd"; usage; exit 1 ;;
 esac

@@ -2,11 +2,14 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-COPY ../frontend/package*.json ./
-RUN npm install
+COPY frontend/ ./
 
-COPY ../frontend/ ./
-RUN npm run build
+RUN if [ -d "dist" ] && [ "$(ls -A dist 2>/dev/null)" ]; then \
+        echo "Using existing frontend dist, skipping build"; \
+    else \
+        echo "Building frontend..."; \
+        npm install && npm run build; \
+    fi
 
 FROM golang:1.24-alpine AS go-builder
 
@@ -14,15 +17,17 @@ WORKDIR /build
 
 ENV GOPROXY=https://goproxy.cn,direct
 
-COPY ../server/go.mod ../server/go.sum ./
-RUN go mod download
-
-COPY ../server/ ./
-COPY ../data ./data/
-
+COPY server/ ./
+COPY data ./data/
 COPY --from=frontend-builder /app/dist ./dist
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o server .
+RUN if [ -f "devsec-server" ] && [ -s "devsec-server" ]; then \
+        echo "Using existing devsec-server binary, skipping build"; \
+    else \
+        echo "Building devsec-server..."; \
+        go mod download && \
+        CGO_ENABLED=0 GOOS=linux go build -o devsec-server .; \
+    fi
 
 FROM alpine:3.19
 
@@ -32,7 +37,7 @@ RUN apk add --no-cache ca-certificates tzdata && \
 
 WORKDIR /app
 
-COPY --from=go-builder /build/server ./
+COPY --from=go-builder /build/devsec-server ./server
 COPY --from=go-builder /build/dist ./dist
 COPY --from=go-builder /build/data ./data
 
