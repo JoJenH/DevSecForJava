@@ -1,0 +1,5 @@
+proxies:
+  - name: vul
+    target: http://java-vul:8081
+  - name: fixed
+    target: http://java-fixed:8082

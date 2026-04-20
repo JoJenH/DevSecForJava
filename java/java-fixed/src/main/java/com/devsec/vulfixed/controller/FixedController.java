@@ -2,7 +2,6 @@ package com.devsec.vulfixed.controller;
 
 import com.devsec.vulfixed.model.VerifyRequest;
 import com.devsec.vulfixed.model.VerifyResponse;
-import com.devsec.vulfixed.service.FixedServiceRegistry;
 import com.devsec.vulfixed.service.FixedVerifyService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -13,16 +12,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/fixed")
 public class FixedController {
     private static final Logger logger = LoggerFactory.getLogger(FixedController.class);
 
-    private final FixedServiceRegistry registry;
+    private final Map<String, FixedVerifyService> services;
 
-    public FixedController(FixedServiceRegistry registry) {
-        this.registry = registry;
+    public FixedController(List<FixedVerifyService> serviceList) {
+        this.services = serviceList.stream()
+                .collect(Collectors.toMap(
+                        s -> s.getCategory().toLowerCase() + ":" + s.getItem().toLowerCase(),
+                        s -> s,
+                        (a, b) -> a
+                ));
     }
 
     @PostMapping("/verify")
@@ -39,7 +44,8 @@ public class FixedController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        FixedVerifyService service = registry.getService(category, item);
+        String key = category.toLowerCase() + ":" + item.toLowerCase();
+        FixedVerifyService service = services.get(key);
 
         if (service == null) {
             logger.warn("No fixed service found for category={}, item={}", category, item);
@@ -57,10 +63,10 @@ public class FixedController {
 
     @GetMapping("/list")
     public ResponseEntity<Map<String, Object>> listVulnerabilities() {
-        List<FixedVerifyService> services = registry.getAllServices();
+        List<FixedVerifyService> allServices = services.values().stream().collect(Collectors.toList());
 
         Map<String, List<String>> vulnerabilityMap = new HashMap<>();
-        for (FixedVerifyService service : services) {
+        for (FixedVerifyService service : allServices) {
             vulnerabilityMap
                     .computeIfAbsent(service.getCategory(), k -> new java.util.ArrayList<>())
                     .add(service.getItem());
@@ -68,7 +74,7 @@ public class FixedController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("categories", vulnerabilityMap);
-        result.put("total", services.size());
+        result.put("total", allServices.size());
 
         return ResponseEntity.ok(result);
     }

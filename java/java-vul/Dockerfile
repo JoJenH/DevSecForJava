@@ -15,9 +15,7 @@ RUN mkdir -p /root/.m2 && \
 
 WORKDIR /build
 
-COPY java/java-vul/target/ ./target/
-COPY java/java-vul/pom.xml .
-COPY java/java-vul/src ./src
+COPY java/java-vul/ ./
 
 RUN if ls target/*.jar 1>/dev/null 2>&1; then \
         echo "Using existing jar, skipping build"; \

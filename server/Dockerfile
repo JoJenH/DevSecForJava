@@ -18,6 +18,7 @@ WORKDIR /build
 ENV GOPROXY=https://goproxy.cn,direct
 
 COPY server/ ./
+COPY config/docker-config.yaml ./config/config.yaml
 COPY data ./data/
 COPY --from=frontend-builder /app/dist ./dist
 
@@ -40,14 +41,13 @@ WORKDIR /app
 COPY --from=go-builder /build/devsec-server ./server
 COPY --from=go-builder /build/dist ./dist
 COPY --from=go-builder /build/data ./data
+COPY --from=go-builder /build/config ./config
 
 RUN chown -R appuser:appgroup /app
 
 USER appuser
 
 ENV PORT=8080
-ENV JAVA_SERVICE_ADDR=http://java-verify:8081
-ENV JAVA_FIXED_SERVICE_ADDR=http://java-fixed:8082
 ENV DATA_PATH=/app/data
 ENV DIST_PATH=/app/dist
 

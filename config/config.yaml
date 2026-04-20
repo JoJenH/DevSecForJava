@@ -1,0 +1,5 @@
+proxies:
+  - name: vul
+    target: http://localhost:8081
+  - name: fixed
+    target: http://localhost:8082

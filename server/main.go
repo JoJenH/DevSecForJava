@@ -13,7 +13,17 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"gopkg.in/yaml.v3"
 )
+
+type ProxyConfig struct {
+	Name   string `yaml:"name"`
+	Target string `yaml:"target"`
+}
+
+type Config struct {
+	Proxies []ProxyConfig `yaml:"proxies"`
+}
 
 func spaFallback(fs http.FileSystem) echo.HandlerFunc {
 	indexFile, err := fs.Open("index.html")
@@ -72,17 +82,27 @@ func main() {
 		distPath = filepath.Join(execDir, "dist")
 	}
 
-	javaAddr := os.Getenv("JAVA_SERVICE_ADDR")
-	if javaAddr == "" {
-		javaAddr = "http://localhost:8081"
-	}
-
-	javaFixedAddr := os.Getenv("JAVA_FIXED_SERVICE_ADDR")
-	if javaFixedAddr == "" {
-		javaFixedAddr = "http://localhost:8082"
-	}
-
 	localMode := os.Getenv("LOCAL_MODE") == "true"
+
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = filepath.Join(execDir, "config", "config.yaml")
+	}
+
+	var proxies []ProxyConfig
+	if localMode {
+		configData, err := os.ReadFile(configPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read config file: %v\n", err)
+		} else {
+			var cfg Config
+			if err := yaml.Unmarshal(configData, &cfg); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to parse config file: %v\n", err)
+			} else {
+				proxies = cfg.Proxies
+			}
+		}
+	}
 
 	addr := os.Getenv("PORT")
 	if addr == "" {
@@ -129,34 +149,20 @@ func main() {
 	edit.DELETE("/categories/:name", HandleDeleteCategory(store))
 
 	if localMode {
-		vulProxy := createProxy(javaAddr)
-		e.Any("/vul/*", echo.WrapHandler(vulProxy))
-		e.GET("/vul", echo.WrapHandler(vulProxy))
-
-		fixedProxy := createProxy(javaFixedAddr)
-		e.Any("/fixed/*", echo.WrapHandler(fixedProxy))
-		e.GET("/fixed", echo.WrapHandler(fixedProxy))
+		for _, proxy := range proxies {
+			p := createProxy(proxy.Target)
+			path := "/" + proxy.Name + "/*"
+			e.POST(path, echo.WrapHandler(p))
+		}
 	} else {
-		e.GET("/vul/*", func(c echo.Context) error {
-			return c.JSON(http.StatusForbidden, map[string]string{
-				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
+		for _, proxy := range proxies {
+			path := "/" + proxy.Name + "/*"
+			e.GET(path, func(c echo.Context) error {
+				return c.JSON(http.StatusForbidden, map[string]string{
+					"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
+				})
 			})
-		})
-		e.GET("/vul", func(c echo.Context) error {
-			return c.JSON(http.StatusForbidden, map[string]string{
-				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
-			})
-		})
-		e.GET("/fixed/*", func(c echo.Context) error {
-			return c.JSON(http.StatusForbidden, map[string]string{
-				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
-			})
-		})
-		e.GET("/fixed", func(c echo.Context) error {
-			return c.JSON(http.StatusForbidden, map[string]string{
-				"error": "漏洞验证功能仅限本地部署使用，请本地部署后使用",
-			})
-		})
+		}
 	}
 
 	distDir := http.Dir(distPath)
@@ -175,11 +181,12 @@ func main() {
 	fmt.Printf("🚀 Server starting on %s\n", addr)
 	fmt.Printf("   Data: %s\n", dataPath)
 	fmt.Printf("   Dist: %s\n", distPath)
-	if localMode {
-		fmt.Printf("   Java: %s\n", javaAddr)
-		fmt.Printf("   Java Fixed: %s\n", javaFixedAddr)
+	if localMode && len(proxies) > 0 {
+		for _, proxy := range proxies {
+			fmt.Printf("   %s: %s\n", proxy.Name, proxy.Target)
+		}
 	} else {
-		fmt.Println("   Java: ⚠️ 漏洞验证功能仅限本地部署使用")
+		fmt.Println("   Proxies: ⚠️ 漏洞验证功能仅限本地部署使用")
 	}
 	e.Logger.Fatal(e.Start(addr))
 }

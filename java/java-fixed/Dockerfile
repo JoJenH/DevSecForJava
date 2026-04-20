@@ -15,9 +15,7 @@ RUN mkdir -p /root/.m2 && \
 
 WORKDIR /build
 
-COPY java/java-fixed/target/ ./target/
-COPY java/java-fixed/pom.xml .
-COPY java/java-fixed/src ./src
+COPY java/java-fixed/ ./
 
 RUN if ls target/*.jar 1>/dev/null 2>&1; then \
         echo "Using existing jar, skipping build"; \
